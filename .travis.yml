@@ -65,3 +65,6 @@ script:
 #
 # script:
 #     - platformio ci --lib="." --board=ID_1 --board=ID_2 --board=ID_N
+
+notifications:
+  email: false
