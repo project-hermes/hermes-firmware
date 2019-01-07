@@ -1,0 +1,6 @@
+{
+    "terminal.integrated.env.osx": {
+        "PATH": "/Users/bradfordbazemore/.platformio/penv/bin:/Users/bradfordbazemore/.platformio/penv:/Users/bradfordbazemore/bin:/Users/bradfordbazemore/Devel/google-cloud-sdk/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/go/bin",
+        "PLATFORMIO_CALLER": "vscode"
+    }
+}
