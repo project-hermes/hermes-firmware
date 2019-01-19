@@ -23,3 +23,50 @@
 18. click connect on the ap for you home
 19. add your password
 20. the device should restart
+
+## Control flow diagram
+```
+digraph G {
+    wakeUp [shape=Mdiamond];
+    sleep [shape=box];
+    
+    wakeUp->searchForWifi[label="needs upload"];
+    wakeUp->readGPSStart[label="water sensor"];
+    wakeUp->startAP[label="config button"];
+
+    subgraph cluster_0{
+        label="Upload";
+        searchForWifi->upload[label="connected"];
+        upload->checkForUpdate[label="200"];
+        upload->upload[label="500"];
+        checkForUpdate->update;
+    }
+    
+    subgraph cluster_1{
+        label="Dive";
+        readGPSStart->readDepthStart;
+        readDepthStart->readDepthStart[label="d<=1m"];
+        readDepthStart->readTemp[label="d>1m"];
+        readTemp->readDepth;
+        readDepth->readTemp[label="d>1m"];
+        readDepth->readGPSEnd[label="d<=1m"];
+        readGPSEnd->saveDive;
+        saveDive->readGPSStart;
+    }
+    
+    subgraph cluster_2{
+        label="Configure";
+        startAP->startServer;
+        startServer->startAutoConfig;
+        startAutoConfig->waitForUser;
+        waitForUser->saveWifi;
+    }
+    
+    searchForWifi->sleep[label="timeout"];
+    checkForUpdate->sleep[label="no update"];
+    update->sleep;
+    readDepthStart->sleep[label="timeout"];
+    waitForUser->sleep[label="timeout"];
+    saveWifi->sleep;
+}
+```
