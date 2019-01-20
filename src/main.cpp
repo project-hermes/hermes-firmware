@@ -16,14 +16,17 @@
 #define BUILD_VERSION 0.0
 #endif
 
-#define CONFIG_PIN 27
-
-#define uS_TO_S_FACTOR 1000000 /* Conversion factor for micro seconds to seconds */
-#define TIME_TO_SLEEP 5        /* Time ESP32 will go to sleep (in seconds) */
-
 WebServer Server;
 AutoConnect Portal(Server);
 
+
+String getMacAddress() {
+	uint8_t baseMac[6];
+	esp_read_mac(baseMac, ESP_MAC_WIFI_STA);
+	char baseMacChr[18] = {0};
+	sprintf(baseMacChr, "%02X:%02X:%02X:%02X:%02X:%02X", baseMac[0], baseMac[1], baseMac[2], baseMac[3], baseMac[4], baseMac[5]);
+	return String(baseMacChr);
+}
 
 void runPortal()
 {
@@ -79,15 +82,14 @@ void setup()
   delay(100);
   Serial.println();
 
-  pinMode(CONFIG_PIN, INPUT);
-
   Serial.printf("system starting...\n");
   Serial.printf("build Version: %D\n", BUILD_VERSION);
   Serial.printf("built At: %d\n", BUILD_TIME);
+  Serial.printf("uuid: %s\n", getMacAddress());
 
   wakeup();
 
-  esp_sleep_enable_ext0_wakeup(GPIO_NUM_27, 1);
+  esp_sleep_enable_ext0_wakeup(GPIO_NUM_13, 1);
   Serial.println("Going to sleep now");
   esp_deep_sleep_start();
 }
