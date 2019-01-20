@@ -22,4 +22,11 @@
 # Ignore all local history of files
 .history
 
+### nanopb ###
+*.pb.*
+
+### Editor detritus ###
+*.swp
+*.swo
+
 # End of https://www.gitignore.io/api/platformio,visualstudiocode
