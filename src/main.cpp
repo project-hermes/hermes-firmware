@@ -55,23 +55,18 @@ void wakeup()
     break;
   case ESP_SLEEP_WAKEUP_EXT1:
     Serial.println("Wakeup caused by external signal using RTC_CNTL");
-    delay(1000);
     break;
   case ESP_SLEEP_WAKEUP_TIMER:
     Serial.println("Wakeup caused by timer");
-    delay(1000);
     break;
   case ESP_SLEEP_WAKEUP_TOUCHPAD:
     Serial.println("Wakeup caused by touchpad");
-    delay(1000);
     break;
   case ESP_SLEEP_WAKEUP_ULP:
     Serial.println("Wakeup caused by ULP program");
-    delay(1000);
     break;
   default:
     Serial.printf("Wakeup was not caused by deep sleep: %d\n", wakeup_reason);
-    delay(1000);
     break;
   }
 }
@@ -82,14 +77,17 @@ void setup()
   delay(100);
   Serial.println();
 
+  pinMode(12, INPUT);
+
   Serial.printf("system starting...\n");
-  Serial.printf("build Version: %D\n", BUILD_VERSION);
+  Serial.printf("build Version: %f\n", BUILD_VERSION);
   Serial.printf("built At: %d\n", BUILD_TIME);
-  Serial.printf("uuid: %s\n", getMacAddress());
+  Serial.printf("uuid: %s\n", getMacAddress().c_str());
+  delay(100);
 
   wakeup();
 
-  esp_sleep_enable_ext0_wakeup(GPIO_NUM_13, 1);
+  esp_sleep_enable_ext0_wakeup(GPIO_NUM_12, 1);
   Serial.println("Going to sleep now");
   esp_deep_sleep_start();
 }
