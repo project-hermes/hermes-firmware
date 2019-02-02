@@ -2,6 +2,7 @@
 #include <AutoConnect.h>
 #include <WiFi.h>
 #include <WebServer.h>
+#include <SPIFFS.h>
 
 #ifdef DEBUG
 #define AC_DEBUG
@@ -42,6 +43,44 @@ void runPortal()
   }
 }
 
+void startDive(){
+   if(!SPIFFS.begin(true)){
+        Serial.println("An Error has occurred while mounting SPIFFS");
+        return;
+   }
+ 
+    File file = SPIFFS.open("/test.txt", FILE_WRITE);
+ 
+    if(!file){
+        Serial.println("There was an error opening the file for writing");
+        return;
+    }
+     
+    if(file.print("TEST")){
+        Serial.println("File was written");;
+    } else {
+        Serial.println("File write failed");
+    }
+ 
+    file.close();
+ 
+    File file2 = SPIFFS.open("/test.txt");
+     
+    if(!file2){
+        Serial.println("Failed to open file for reading");
+        return;
+    }
+ 
+    Serial.println("File Content:");
+     
+    while(file2.available()){
+ 
+        Serial.write(file2.read());
+    }
+ 
+    file2.close();
+}
+
 void wakeup()
 {
   esp_sleep_wakeup_cause_t wakeup_reason;
@@ -55,6 +94,7 @@ void wakeup()
     break;
   case ESP_SLEEP_WAKEUP_EXT1:
     Serial.println("Wakeup caused by external signal using RTC_CNTL");
+    startDive();
     break;
   case ESP_SLEEP_WAKEUP_TIMER:
     Serial.println("Wakeup caused by timer");
@@ -78,6 +118,7 @@ void setup()
   Serial.println();
 
   pinMode(12, INPUT);
+  pinMode(21, INPUT);
 
   Serial.printf("system starting...\n");
   Serial.printf("build Version: %f\n", BUILD_VERSION);
@@ -85,11 +126,13 @@ void setup()
   Serial.printf("uuid: %s\n", getMacAddress().c_str());
   delay(100);
 
-  wakeup();
+  startDive();
 
-  esp_sleep_enable_ext0_wakeup(GPIO_NUM_12, 1);
-  Serial.println("Going to sleep now");
-  esp_deep_sleep_start();
+  //wakeup();
+  //esp_sleep_enable_ext0_wakeup(GPIO_NUM_12, 1);
+  //esp_sleep_enable_ext1_wakeup(GPIO_NUM_21, ESP_EXT1_WAKEUP_ANY_HIGH);
+  //Serial.println("Going to sleep now");
+  //esp_deep_sleep_start();
 }
 
 void loop() {}
