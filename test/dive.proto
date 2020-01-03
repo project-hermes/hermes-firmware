@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+import "nanopb.proto";
+
+option go_package="github.com/project-hermes/hermes-app/server/types/protobuf";
+
+message Dive {
+    string sensorId = 1;
+    string sensorType = 2;
+    string firmwareVersion = 3;
+    string schemaVersion = 4;
+    int64 startTime = 5;
+    int64 endTime = 6;
+    float startLat = 7;
+    float startLong = 8;
+    float endLat = 9;
+    float endLong = 10;
+    repeated DataPoint diveData = 11 [(nanopb).max_count = 7200, (nanopb).fixed_count = true];
+}
+
+message DataPoint {
+    float temp = 1;
+    float depth = 2;
+    float conductivity = 3;
+}
