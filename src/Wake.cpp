@@ -13,7 +13,7 @@
 #include <Wake.hpp>
 
 //this is so bad, I know
-#define FIRMWARE_VERSION 1
+#define FIRMWARE_VERSION 2
 
 void wake()
 {
@@ -57,6 +57,7 @@ void wake()
                 {
                     while (digitalRead(GPIO_WATER) == 1)
                     {
+                        pinMode(GPIO_WATER, OUTPUT);
                         Record tempRecord = Record{temperatureSensor.getTemp(), depthSensor.getDepth()};
                         d.NewRecord(tempRecord);
 
@@ -69,6 +70,7 @@ void wake()
                         {
                             digitalWrite(GPIO_LED2, LOW);
                         }
+                        pinMode(GPIO_WATER, INPUT);
                         led_on = !led_on;
                     }
                     if (d.End(now(), gps.getLat(), gps.getLng()) == "")
