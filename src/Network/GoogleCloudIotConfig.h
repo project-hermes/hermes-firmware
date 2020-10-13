@@ -28,7 +28,7 @@ const char *ntp_secondary = "time.nist.gov";
 // it's smaller add "00:" to the start. If it's too big or too small something
 // is probably wrong with your key.
 const char *PRIVATE_KEY =
-    "00:ba:6f:28:7f:3d:c1:f5:30:b4:85:fd:74:b3:1b:"
+    "ba:6f:28:7f:3d:c1:f5:30:b4:85:fd:74:b3:1b:"
     "31:c2:9f:62:f8:d1:c5:50:aa:9e:b2:88:de:c0:48:"
     "25:bd:99";
 

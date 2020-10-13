@@ -99,6 +99,7 @@ bool publishTelemetry(String subfolder, const char *data, int length)
 void connect()
 {
     mqtt->mqttConnect();
+    mqtt->loop();
 }
 
 void setupCloudIoT()

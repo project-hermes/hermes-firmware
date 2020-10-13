@@ -126,6 +126,7 @@ void startPortal()
 
     setupCloudIoT();
     connect();
+    
     publishTelemetry("Hello World!");
     return;
 
