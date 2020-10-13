@@ -12,6 +12,8 @@
 #include <Utils.hpp>
 #include <Wake.hpp>
 
+#include "Network/Hermes.hpp"
+
 //this is so bad, I know
 #define FIRMWARE_VERSION 2
 
@@ -116,7 +118,19 @@ void startPortal()
     acConfig.tickerOn = HIGH;
     Portal.config(acConfig);
     Portal.begin();
-    if (digitalRead(GPIO_VCC_SENSE) == 1)
+
+    while (WiFi.status() == WL_DISCONNECTED)
+    {
+        Portal.handleClient();
+    }
+
+    setupCloudIoT();
+    connect();
+    publishTelemetry("Hello World!");
+    return;
+
+    //turned off for testing
+    /*if (digitalRead(GPIO_VCC_SENSE) == 1)
     {
         while (WiFi.status() == WL_DISCONNECTED)
         {
@@ -131,7 +145,7 @@ void startPortal()
     while (digitalRead(GPIO_VCC_SENSE) == 1)
     {
         Portal.handleClient();
-    }
+    }*/
 }
 
 void ota()

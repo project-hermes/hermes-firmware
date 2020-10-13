@@ -10,4 +10,6 @@ void startPortal();
 
 void ota();
 
+void getJWT();
+
 #endif
