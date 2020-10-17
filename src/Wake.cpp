@@ -123,11 +123,16 @@ void startPortal()
     {
         Portal.handleClient();
     }
-
+    Serial.println("setup cloud");
     setupCloudIoT();
+    Serial.println("connect to cloud");
     connect();
-    
+    Serial.println("publish message");
     publishTelemetry("Hello World!");
+    Serial.println("running update loop");
+    mqttLoop();
+    Serial.println("disconnecting");
+    mqttDisconnect();
     return;
 
     //turned off for testing

@@ -87,15 +87,25 @@ bool publishTelemetry(String subfolder, const char *data, int length)
     return mqtt->publishTelemetry(subfolder, data, length);
 }
 
+void mqttLoop()
+{
+    mqtt->loop();
+}
+
 void connect()
 {
     mqtt->mqttConnect();
     mqtt->loop();
 }
 
+void mqttDisconnect()
+{
+    mqttClient->disconnect();
+}
+
 void setupCloudIoT()
 {
-    Serial.printf("%s %s %s %s\n",PROJECT_ID, REGION_NAME, REGISTRY_ID, DEVICE_ID);
+    Serial.printf("%s %s %s %s\n", PROJECT_ID, REGION_NAME, REGISTRY_ID, DEVICE_ID);
     device = new CloudIoTCoreDevice(
         PROJECT_ID, REGION_NAME, REGISTRY_ID, DEVICE_ID,
         PRIVATE_KEY);
