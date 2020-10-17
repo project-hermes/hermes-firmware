@@ -5,7 +5,8 @@
 
 #include "GoogleCloudIotConfig.h"
 
-#include "time.h"
+#include <NTPClient.h>
+#include <WiFiUdp.h>
 
 #include <Client.h>
 #include <WiFi.h>
@@ -32,8 +33,9 @@ WiFiClientSecure *netClient;
 CloudIoTCoreDevice *device;
 CloudIoTCoreMqtt *mqtt;
 MQTTClient *mqttClient;
-unsigned long iat = 0;
 String jwt;
+WiFiUDP ntpUDP;
+NTPClient timeClient(ntpUDP);
 
 ///////////////////////////////
 // Helpers specific to this board
@@ -46,11 +48,7 @@ String getDefaultSensor()
 String getJwt()
 {
     Serial.println("Refreshing JWT");
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    unsigned long milliseconds = tv.tv_sec * 1000LL + tv.tv_usec / 1000LL;
-    jwt = device->createJWT(1602554024, jwt_exp_secs);
-    Serial.println(milliseconds);
+    jwt = device->createJWT(timeClient.getEpochTime(), jwt_exp_secs);
     Serial.println(jwt.c_str());
     return jwt;
 }
@@ -58,18 +56,11 @@ String getJwt()
 void setupWifi()
 {
     delay(100);
-    configTime(0, 0, ntp_primary, ntp_secondary);
     Serial.println("Waiting on time sync...");
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    int64_t milliseconds = tv.tv_sec * 1000LL + tv.tv_usec / 1000LL;
-    while (milliseconds < 1602554024)
-    {
-        gettimeofday(&tv, NULL);
-        milliseconds = tv.tv_sec * 1000LL + tv.tv_usec / 1000LL;
-        delay(100);
-        Serial.printf("Now is %lu needs to be greater than 1510644967\n", milliseconds);
-    }
+    timeClient.begin();
+    delay(100);
+    timeClient.update();
+    Serial.println(timeClient.getFormattedTime());
     return;
 }
 
