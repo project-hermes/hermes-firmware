@@ -49,7 +49,6 @@ String getJwt()
 {
     Serial.println("Refreshing JWT");
     jwt = device->createJWT(timeClient.getEpochTime(), jwt_exp_secs);
-    Serial.println(jwt.c_str());
     return jwt;
 }
 
@@ -60,7 +59,6 @@ void setupWifi()
     timeClient.begin();
     delay(100);
     timeClient.update();
-    Serial.println(timeClient.getFormattedTime());
     return;
 }
 

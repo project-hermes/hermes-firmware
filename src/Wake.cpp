@@ -17,6 +17,9 @@
 //this is so bad, I know
 #define FIRMWARE_VERSION 2
 
+//TODO remove
+SecureDigital sd;
+
 void wake()
 {
     Serial.printf("firmware version:%d\n", FIRMWARE_VERSION);
@@ -46,7 +49,7 @@ void wake()
                 delay(10);
 
                 GNSS gps = GNSS();
-                SecureDigital sd = SecureDigital();
+                sd = SecureDigital();
                 Dive d(&sd);
                 tsys01 temperatureSensor = tsys01();
                 ms5837 depthSensor = ms5837();
@@ -123,12 +126,32 @@ void startPortal()
     {
         Portal.handleClient();
     }
+
     Serial.println("setup cloud");
     setupCloudIoT();
     Serial.println("connect to cloud");
     connect();
     Serial.println("publish message");
-    publishTelemetry("Hello World!");
+
+    String index = sd.readFile("/index.txt");
+    Serial.print(index);
+    Serial.println();
+    int index_l = index.length();
+    vector<String> dives;
+    int lastIndex = 0;
+    for (int i = 0; i < index_l - 1; i++)
+    {
+        if (index[i] == '\n' || index[i] == EOF)
+        {
+            dives.push_back(index.substring(lastIndex, i));
+            lastIndex = i;
+        }
+    }
+    for (String s : dives)
+    {
+        Serial.print(s);
+    }
+
     Serial.println("running update loop");
     mqttLoop();
     Serial.println("disconnecting");

@@ -16,6 +16,8 @@ public:
     virtual int appendFile(String path, String data) = 0;
     virtual int renameFile(String pathA, String pathB) = 0;
     virtual int deleteFile(String path) = 0;
+    virtual int findFile(String path) = 0;
+    virtual int touchFile(String path) = 0;
 };
 
 #endif

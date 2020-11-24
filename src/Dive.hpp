@@ -45,6 +45,8 @@ private:
     const String recordSchema[2] = {"temp", "depth"};
     const int siloRecordSize = 300;
     const int siloByteSize = 27000;
+    const int indexByteSize = 27000;
+    const String indexPath = "/index.json";
     int currentRecords = 0;
     Record *diveRecords;
 
@@ -67,7 +69,7 @@ private:
 
         String buffer;
         serializeJson(jsonSilo, buffer);
-        
+
         return storage->writeFile(String("/" + ID + "/silos_" + order + ".json").c_str(), buffer);
     }
 
@@ -102,7 +104,49 @@ private:
         data = data + "endLng:" + lng + "\n";
         data = data + "numberOfSilos:" + order + "\n";
 
+        updateIndex();
+
         return storage->appendFile(String("/" + ID + "/metadata.txt").c_str(), data.c_str());
+    }
+
+    int updateIndex()
+    {
+        //this should only happen to a new device
+        if (storage->findFile(indexPath) == -1)
+        {
+            //TODO need a log for this
+
+            DynamicJsonDocument index(indexByteSize);
+
+            JsonArray dives = index.createNestedArray("dives");
+            dives.add(ID);
+
+            String buffer;
+            serializeJson(index, buffer);
+
+            return storage->writeFile(indexPath, buffer);
+        }
+        else
+        {
+            String index = storage->readFile(indexPath);
+            if (index == "")
+            {
+                //TODO error here
+                return -1;
+            }
+            else
+            {
+                DynamicJsonDocument newIndex(indexByteSize);
+
+                deserializeJson(newIndex, index);
+                newIndex["dives"].add(ID);
+
+                String buffer;
+                serializeJson(newIndex, buffer);
+
+                return storage->writeFile(indexPath, buffer);
+            }
+        }
     }
 
     String createID(long time)

@@ -61,15 +61,20 @@ public:
         }
     }
 
-    int removeDirectory(String path){
-        if(SD.rmdir(path.c_str())){
+    int removeDirectory(String path)
+    {
+        if (SD.rmdir(path.c_str()))
+        {
             return 0;
-        }else{
+        }
+        else
+        {
             return -1;
         }
     }
 
-    String readFile(String path){
+    String readFile(String path)
+    {
         String data;
         File file = SD.open(path);
         if (!file)
@@ -77,8 +82,9 @@ public:
             return "";
         }
 
-        while(file.available()){
-            data = data + file.read();
+        while (file.available())
+        {
+            data = data + file.readString();
         }
 
         file.close();
@@ -86,49 +92,93 @@ public:
         return data;
     }
 
-    int writeFile(String path, String data){
+    int writeFile(String path, String data)
+    {
         File file = SD.open(path, FILE_WRITE);
-        if(!file){
+        if (!file)
+        {
             return -1;
         }
 
-        if(file.print(data)){
+        if (file.print(data))
+        {
             file.close();
             return 0;
-        }else{
+        }
+        else
+        {
             file.close();
             return -1;
         }
     }
 
-    int appendFile(String path, String data){
+    int appendFile(String path, String data)
+    {
         File file = SD.open(path, FILE_APPEND);
-        if(!file){
+        if (!file)
+        {
             return -1;
         }
 
-        if(file.print(data)){
+        if (file.print(data))
+        {
             file.close();
             return 0;
-        }else{
+        }
+        else
+        {
             file.close();
             return -1;
         }
     }
 
-    int renameFile(String pathA, String pathB){
-        if(SD.rename(pathA, pathB)){
+    int renameFile(String pathA, String pathB)
+    {
+        if (SD.rename(pathA, pathB))
+        {
             return 0;
-        }else{
+        }
+        else
+        {
             return -1;
         }
     }
 
-    int deleteFile(String path){
-        if(SD.remove(path)){
+    int deleteFile(String path)
+    {
+        if (SD.remove(path))
+        {
             return 0;
-        }else{
+        }
+        else
+        {
             return -1;
+        }
+    }
+
+    int findFile(String path)
+    {
+        if (SD.exists(path))
+        {
+            return 0;
+        }
+        else
+        {
+            return -1;
+        }
+    }
+
+    int touchFile(String path)
+    {
+        if (SD.exists(path))
+        {
+            return 0;
+        }
+        else
+        {
+            File file = SD.open(path, FILE_WRITE);
+            file.close();
+            return 1;
         }
     }
 };
