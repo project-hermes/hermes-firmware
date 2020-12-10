@@ -12,7 +12,7 @@
 #include <Utils.hpp>
 #include <Wake.hpp>
 
-#include "Network/Hermes.hpp"
+#include <Network/GoogleCloudIOT.hpp>
 
 //this is so bad, I know
 #define FIRMWARE_VERSION 2
@@ -127,35 +127,15 @@ void startPortal()
         Portal.handleClient();
     }
 
+    GoogleCloudIOT cloud = GoogleCloudIOT();
+
     Serial.println("setup cloud");
-    setupCloudIoT();
     Serial.println("connect to cloud");
-    connect();
+    cloud.connect();
     Serial.println("publish message");
-
-    String index = sd.readFile("/index.txt");
-    Serial.print(index);
-    Serial.println();
-    int index_l = index.length();
-    vector<String> dives;
-    int lastIndex = 0;
-    for (int i = 0; i < index_l - 1; i++)
-    {
-        if (index[i] == '\n' || index[i] == EOF)
-        {
-            dives.push_back(index.substring(lastIndex, i));
-            lastIndex = i;
-        }
-    }
-    for (String s : dives)
-    {
-        Serial.print(s);
-    }
-
-    Serial.println("running update loop");
-    mqttLoop();
+    cloud.upload("Hello World!");
     Serial.println("disconnecting");
-    mqttDisconnect();
+    cloud.disconnect();
     return;
 
     //turned off for testing
