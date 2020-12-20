@@ -1,6 +1,11 @@
 #include <WiFi.h>
 #include <mbedtls/md.h>
 
+#include <Storage/SecureDigital.hpp>
+#include <ArduinoJson.h>
+
+#include <Arduino.h>
+
 #include <Utils.hpp>
 
 String remoraID()
@@ -30,4 +35,65 @@ String remoraID()
     }
 
     return hash;
+}
+
+int readConfig(){
+    SecureDigital sd = SecureDigital();
+    StaticJsonDocument<512> doc;
+
+    if(sd.findFile(configFilePath)==-1){
+        //TODO I am not sure if I need to check for var init of the config obj
+        if(sd.touchFile(configFilePath)==-1){
+            Serial.println("Failed to setup create a blank config file");
+            return -1;
+        }
+
+        if(writeConfig()==-1){
+            Serial.println("Failed to write blank config file");
+            return -1;
+        }
+    }
+
+    String data = sd.readFile(configFilePath);
+    if(data==""){
+        Serial.println("Error reading congfig file!");
+        return -1;
+    }
+
+    DeserializationError error = deserializeJson(doc, data);
+    if(error){
+        Serial.println("Could not deserialize config file!");
+        return -1;
+    }
+
+    config.updatedAt = doc["updatedAt"];
+    config.createdAt = doc["createdAt"];
+    config.updatedBy = doc["updatedBy"].as<String>();
+    config.firmwareVersion = doc["firmwareVersion"].as<String>();
+
+    return 0;
+}
+
+int writeConfig(){
+    SecureDigital sd = SecureDigital();
+
+    if(sd.deleteFile(configFilePath)==-1){
+        Serial.println("Failed to delete config file for update");
+        return -1;
+    }
+
+    StaticJsonDocument<512> doc;
+
+    doc["updatedAt"] = config.updatedAt;
+    doc["createdAt"] = config.createdAt;
+    doc["updatedBy"] = config.updatedBy;
+    doc["firmwareVersion"] = config.firmwareVersion;
+
+    String buffer;
+    serializeJson(doc, buffer);
+
+    if(sd.writeFile(configFilePath, buffer)==-1){
+        Serial.println("Failed to write config file");
+        return -1;
+    }
 }
