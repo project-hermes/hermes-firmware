@@ -8,14 +8,16 @@ struct Config{
     long createdAt;
     String updatedBy;
 
-    String firmwareVersion;
+    String currentFirmwareVersion;
+    String targetFirmwareVersion;
 };
 
-extern Config config;
+static Config config = {};
 
 const String configFilePath = "/config.json";
 
 String remoraID();
+int parseConfig(String data);
 int readConfig();
 int writeConfig();
 
