@@ -121,8 +121,8 @@ private:
 
             DynamicJsonDocument index(indexByteSize);
 
-            JsonArray dives = index.createNestedArray("dives");
-            dives.add(ID);
+            JsonArray dives = index.to<JsonArray>();
+            JsonObject dive = dives.createNestedObject();
 
             String buffer;
             serializeJson(index, buffer);
@@ -134,7 +134,7 @@ private:
             String index = storage->readFile(indexPath);
             if (index == "")
             {
-                //TODO error here
+                Serial.println("Could not read index file");
                 return -1;
             }
             else
@@ -142,7 +142,10 @@ private:
                 DynamicJsonDocument newIndex(indexByteSize);
 
                 deserializeJson(newIndex, index);
-                newIndex["dives"].add(ID);
+                JsonArray dives = newIndex.to<JsonArray>();
+                JsonObject dive = dives.createNestedObject();
+                dive["id"] = ID;
+                dive["uploadedAt"] = 0;
 
                 String buffer;
                 serializeJson(newIndex, buffer);
