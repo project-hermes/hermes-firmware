@@ -1,3 +1,6 @@
+#ifndef DIVE_HPP
+#define DIVE_HPP
+
 #include <mbedtls/md.h>
 #include <WiFi.h>
 #include <ArduinoJson.h>
@@ -178,3 +181,5 @@ private:
         return hash;
     }
 };
+
+#endif

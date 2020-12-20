@@ -11,12 +11,12 @@ struct Config{
     String firmwareVersion;
 };
 
-Config config;
+extern Config config;
 
-String configFilePath = "/config.json";
+const String configFilePath = "/config.json";
 
 String remoraID();
 int readConfig();
-int writeConfig(const Config &config);
+int writeConfig();
 
 #endif

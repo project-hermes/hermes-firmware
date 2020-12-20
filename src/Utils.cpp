@@ -96,4 +96,6 @@ int writeConfig(){
         Serial.println("Failed to write config file");
         return -1;
     }
+
+    return 0;
 }
