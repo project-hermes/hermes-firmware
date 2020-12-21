@@ -76,7 +76,7 @@ private:
         return storage->writeFile(String("/" + ID + "/silos_" + order + ".json").c_str(), buffer);
     }
 
-    int writeMetadataStart(long time, double lat, double lng, int freq)
+    /*int writeMetadataStart(long time, double lat, double lng, int freq)
     {
         String data;
 
@@ -96,9 +96,30 @@ private:
         data = data + "]\n";
 
         return storage->writeFile(String("/" + ID + "/metadata.txt").c_str(), data.c_str());
+    }*/
+
+    int writeMetadataStart(long time, double lat, double lng, int freq)
+    {
+        StaticJsonDocument<1024> mdata;
+
+        storage->makeDirectory(String("/" + ID).c_str());
+
+        mdata["deviceId"] = remoraID();
+        mdata["diveId"] = ID;
+        mdata["startTime"] = time;
+        mdata["startLat"] = lat;
+        mdata["startLng"] = lng;
+        mdata["freq"] = freq;
+
+        JsonArray schema = mdata.createNestedArray();
+        copyArray(recordSchema, schema);
+
+        String buffer;
+        serializeJson(mdata, buffer);
+        return storage->writeFile(String("/" + ID + "/metadata.json").c_str(), buffer.c_str());
     }
 
-    int writeMetadataEnd(long time, double lat, double lng)
+    /*int writeMetadataEnd(long time, double lat, double lng)
     {
         String data;
 
@@ -110,6 +131,30 @@ private:
         updateIndex();
 
         return storage->appendFile(String("/" + ID + "/metadata.txt").c_str(), data.c_str());
+    }*/
+
+    int writeMetadataEnd(long time, double lat, double lng)
+    {
+        StaticJsonDocument<1024> metadataJson;
+
+        String data;
+        data = storage->readFile(String("/" + ID + "/metadata.json").c_str());
+        if (data == "")
+        {
+            Serial.println("Failed to read meatadata to save dive!");
+            return -1;
+        }
+
+        deserializeJson(metadataJson, data);
+
+        metadataJson["endTime"] = time;
+        metadataJson["endLat"] = lat;
+        metadataJson["endLng"] = lng;
+        metadataJson["numberOfSilos"] = order;
+
+        String buffer;
+        serializeJson(metadataJson, buffer);
+        return storage->writeFile(String("/" + ID + "/metadata.json").c_str(), buffer.c_str());
     }
 
     int updateIndex()
