@@ -73,7 +73,7 @@ private:
         String buffer;
         serializeJson(jsonSilo, buffer);
 
-        return storage->writeFile(String("/" + ID + "/silos_" + order + ".json").c_str(), buffer);
+        return storage->writeFile(String("/" + ID + "/silo_" + order + ".json").c_str(), buffer);
     }
 
     /*int writeMetadataStart(long time, double lat, double lng, int freq)
@@ -167,7 +167,7 @@ private:
             DynamicJsonDocument index(indexByteSize);
 
             JsonArray dives = index.to<JsonArray>();
-            JsonObject dive = dives.createNestedObject();
+            //JsonObject dive = dives.createNestedObject();
 
             String buffer;
             serializeJson(index, buffer);

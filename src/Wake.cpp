@@ -157,6 +157,42 @@ void startPortal()
     }*/
 }
 
+int uploadDives(GoogleCloudIOT cloud)
+{
+    StaticJsonDocument<1024> indexJson;
+
+    sd = SecureDigital();
+
+    String data;
+    data = sd.readFile("/index.json");
+    if (data == "")
+    {
+        Serial.println("Could not read index file to upload dives");
+        return -1;
+    }
+
+    deserializeJson(indexJson, data);
+
+    JsonArray dives = indexJson.to<JsonArray>();
+    for (JsonVariant v : dives)
+    {
+        JsonObject dive = v.as<JsonObject>();
+        if (dive["uploadedAt"] != 0)
+        {
+            continue;
+        }
+
+        StaticJsonDocument<512> diveMetadataJson;
+        String diveMetadata = sd.readFile(String("/" + dive["id"] + "/metadata.json").c_str());
+        if (diveMetadata == "")
+        {
+            Serial.println(String("could not load dive metadata for dive " + dive["id"]).c_str());
+            return -1;
+        }
+        
+    }
+}
+
 void ota()
 {
     String cloudFunction = "http://us-central1-project-hermes-staging.cloudfunctions.net/ota";
