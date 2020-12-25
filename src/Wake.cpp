@@ -17,6 +17,8 @@
 //this is so bad, I know
 #define FIRMWARE_VERSION 2
 
+using namespace std;
+
 //TODO remove
 SecureDigital sd;
 
@@ -183,13 +185,30 @@ int uploadDives(GoogleCloudIOT cloud)
         }
 
         StaticJsonDocument<512> diveMetadataJson;
-        String diveMetadata = sd.readFile(String("/" + dive["id"] + "/metadata.json").c_str());
+        String diveId = dive["id"];
+        String diveMetadata = sd.readFile(String("/" + diveId + "/metadata.json"));
         if (diveMetadata == "")
         {
-            Serial.println(String("could not load dive metadata for dive " + dive["id"]).c_str());
+            Serial.println("could not load dive metadata for dive " + diveId);
             return -1;
         }
-        
+
+        deserializeJson(diveMetadataJson, diveMetadata);
+
+        int numberOfSilos = diveMetadataJson["numberOfSilos"];
+
+        for (int i = 1; i < numberOfSilos + 1; i++)
+        {
+            String diveSilo = sd.readFile(String("/" + diveId + "/" + "silo_" + i + ".json"));
+            if (diveSilo == "")
+            {
+                Serial.println("could not load dive silo #" + String(i) + " for dive " + diveId);
+            }
+
+            if(cloud.upload(diveSilo)==-1){
+                Serial.println("Could not upload sile #" + String(i) + " of dive " + diveId);
+            }
+        }
     }
 }
 
