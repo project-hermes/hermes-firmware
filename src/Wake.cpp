@@ -165,13 +165,13 @@ int uploadDives(GoogleCloudIOT cloud)
 
     String data;
     data = sd.readFile("/index.json");
+    Serial.println(heap_caps_get_free_size(MALLOC_CAP_8BIT));
     Serial.println(data);
     if (data == "")
     {
         Serial.println("Could not read index file to upload dives");
         return -1;
     }
-
     deserializeJson(indexJson, data);
 
     JsonArray dives = indexJson.to<JsonArray>();
