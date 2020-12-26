@@ -12,8 +12,6 @@
 #include <Utils.hpp>
 #include <Wake.hpp>
 
-#include <Network/GoogleCloudIOT.hpp>
-
 //this is so bad, I know
 #define FIRMWARE_VERSION 2
 
@@ -135,9 +133,10 @@ void startPortal()
     Serial.println("connect to cloud");
     cloud.connect();
     Serial.println("publish message");
+    uploadDives(cloud);
     cloud.upload("Hello World!");
-    Serial.println("disconnecting");
-    cloud.disconnect();
+    //Serial.println("disconnecting");
+    //cloud.disconnect();
     return;
 
     //turned off for testing
@@ -162,11 +161,11 @@ void startPortal()
 int uploadDives(GoogleCloudIOT cloud)
 {
     StaticJsonDocument<1024> indexJson;
-
     sd = SecureDigital();
 
     String data;
     data = sd.readFile("/index.json");
+    Serial.println(data);
     if (data == "")
     {
         Serial.println("Could not read index file to upload dives");
@@ -187,6 +186,7 @@ int uploadDives(GoogleCloudIOT cloud)
         StaticJsonDocument<512> diveMetadataJson;
         String diveId = dive["id"];
         String diveMetadata = sd.readFile(String("/" + diveId + "/metadata.json"));
+        Serial.println(diveMetadata);
         if (diveMetadata == "")
         {
             Serial.println("could not load dive metadata for dive " + diveId);
@@ -200,15 +200,19 @@ int uploadDives(GoogleCloudIOT cloud)
         for (int i = 1; i < numberOfSilos + 1; i++)
         {
             String diveSilo = sd.readFile(String("/" + diveId + "/" + "silo_" + i + ".json"));
+            Serial.println(diveSilo);
             if (diveSilo == "")
             {
                 Serial.println("could not load dive silo #" + String(i) + " for dive " + diveId);
+                return -1;
             }
-
-            if(cloud.upload(diveSilo)==-1){
+            if (cloud.upload(diveSilo) == -1)
+            {
                 Serial.println("Could not upload sile #" + String(i) + " of dive " + diveId);
+                return -1;
             }
         }
+        //TODO update the index so the dive does not reuplaod
     }
 }
 
