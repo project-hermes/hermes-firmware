@@ -134,7 +134,6 @@ void startPortal()
     cloud.connect();
     Serial.println("publish message");
     uploadDives(cloud);
-    cloud.upload("Hello World!");
     //Serial.println("disconnecting");
     //cloud.disconnect();
     return;
@@ -165,28 +164,25 @@ int uploadDives(GoogleCloudIOT cloud)
 
     String data;
     data = sd.readFile("/index.json");
-    Serial.println(heap_caps_get_free_size(MALLOC_CAP_8BIT));
-    Serial.println(data);
     if (data == "")
     {
         Serial.println("Could not read index file to upload dives");
         return -1;
     }
+
     deserializeJson(indexJson, data);
 
-    JsonArray dives = indexJson.to<JsonArray>();
-    for (JsonVariant v : dives)
+    for (int i = 0; i < indexJson.size(); i++)
     {
-        JsonObject dive = v.as<JsonObject>();
+        JsonObject dive = indexJson[i].as<JsonObject>();
         if (dive["uploadedAt"] != 0)
         {
             continue;
         }
-
         StaticJsonDocument<512> diveMetadataJson;
         String diveId = dive["id"];
+
         String diveMetadata = sd.readFile(String("/" + diveId + "/metadata.json"));
-        Serial.println(diveMetadata);
         if (diveMetadata == "")
         {
             Serial.println("could not load dive metadata for dive " + diveId);
@@ -200,15 +196,14 @@ int uploadDives(GoogleCloudIOT cloud)
         for (int i = 1; i < numberOfSilos + 1; i++)
         {
             String diveSilo = sd.readFile(String("/" + diveId + "/" + "silo_" + i + ".json"));
-            Serial.println(diveSilo);
             if (diveSilo == "")
             {
-                Serial.println("could not load dive silo #" + String(i) + " for dive " + diveId);
+                Serial.println("could not load dive silo " + String(i) + " for dive " + diveId);
                 return -1;
             }
             if (cloud.upload(diveSilo) == -1)
             {
-                Serial.println("Could not upload sile #" + String(i) + " of dive " + diveId);
+                Serial.println("Could not upload silo " + String(i) + " of dive " + diveId);
                 return -1;
             }
         }
