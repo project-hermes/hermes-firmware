@@ -127,13 +127,7 @@ void startPortal()
         Portal.handleClient();
     }
 
-    GoogleCloudIOT cloud = GoogleCloudIOT();
-
-    Serial.println("setup cloud");
-    Serial.println("connect to cloud");
-    cloud.connect();
-    Serial.println("publish message");
-    uploadDives(cloud);
+    uploadDives();
     //Serial.println("disconnecting");
     //cloud.disconnect();
     return;
@@ -157,8 +151,12 @@ void startPortal()
     }*/
 }
 
-int uploadDives(GoogleCloudIOT cloud)
+int uploadDives()
 {
+
+    GoogleCloudIOT cloud = GoogleCloudIOT();
+    cloud.connect();
+
     StaticJsonDocument<1024> indexJson;
     sd = SecureDigital();
 
@@ -169,7 +167,6 @@ int uploadDives(GoogleCloudIOT cloud)
         Serial.println("Could not read index file to upload dives");
         return -1;
     }
-
     deserializeJson(indexJson, data);
 
     for (int i = 0; i < indexJson.size(); i++)
@@ -181,7 +178,6 @@ int uploadDives(GoogleCloudIOT cloud)
         }
         StaticJsonDocument<512> diveMetadataJson;
         String diveId = dive["id"];
-
         String diveMetadata = sd.readFile(String("/" + diveId + "/metadata.json"));
         if (diveMetadata == "")
         {
@@ -201,10 +197,20 @@ int uploadDives(GoogleCloudIOT cloud)
                 Serial.println("could not load dive silo " + String(i) + " for dive " + diveId);
                 return -1;
             }
-            if (cloud.upload(diveSilo) == -1)
+            else
+            {
+                Serial.println("Loaded silo " + String(i) + " of dive " + diveId);
+            }
+
+            if (cloud.upload("Test dive data") == -1)
             {
                 Serial.println("Could not upload silo " + String(i) + " of dive " + diveId);
                 return -1;
+            }
+            else
+            {
+                Serial.println("Uploaded silo " + String(i) + " of dive " + diveId);
+                delay(100);
             }
         }
         //TODO update the index so the dive does not reuplaod

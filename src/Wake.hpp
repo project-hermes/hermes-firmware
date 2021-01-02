@@ -12,7 +12,7 @@ void startPortal();
 
 void ota();
 
-int uploadDives(GoogleCloudIOT);
+int uploadDives();
 
 void getJWT();
 
