@@ -12,6 +12,8 @@
 #include <Utils.hpp>
 #include <Wake.hpp>
 
+
+
 //this is so bad, I know
 #define FIRMWARE_VERSION 2
 
@@ -210,7 +212,6 @@ int uploadDives()
             else
             {
                 Serial.println("Uploaded silo " + String(i) + " of dive " + diveId);
-                delay(100);
             }
         }
         //TODO update the index so the dive does not reuplaod
