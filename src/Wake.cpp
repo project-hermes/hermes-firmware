@@ -108,6 +108,7 @@ void startPortal()
     Serial.printf("starting config portal...\n");
     AutoConnectConfig acConfig("Remora Config", "cousteau");
     acConfig.hostName="remora";
+    acConfig.homeUri="/remora";
     acConfig.autoReconnect = true;
     acConfig.autoReset = false;
     acConfig.portalTimeout = 15 * 60 * 1000;

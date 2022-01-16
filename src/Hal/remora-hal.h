@@ -6,6 +6,7 @@ const int GPIO_GPS_POWER = 27;
 const int GPIO_CONFIG = 39;
 const int GPIO_WATER = 36;
 const int GPIO_VCC_SENSE = 35;
+const int GPIO_VBATT = 34;
 
 const int I2C_SCL = 21;
 const int I2C_SDA = 22;
