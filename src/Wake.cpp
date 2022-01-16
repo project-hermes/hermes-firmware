@@ -12,7 +12,7 @@
 #include <Utils.hpp>
 #include <Wake.hpp>
 
-//this is so bad, I know
+// this is so bad, I know
 #define FIRMWARE_VERSION 2
 
 void wake()
@@ -35,7 +35,7 @@ void wake()
         if (wakeup_reason & mask)
         {
             Serial.printf("Wakeup because %d\n", i);
-            if (i == GPIO_WATER) //dive
+            if (i == GPIO_WATER) // dive
             {
                 pinMode(GPIO_SENSOR_POWER, OUTPUT);
                 digitalWrite(GPIO_SENSOR_POWER, LOW);
@@ -107,13 +107,14 @@ void startPortal()
 
     Serial.printf("starting config portal...\n");
     AutoConnectConfig acConfig("Remora Config", "cousteau");
+    acConfig.hostName="remora";
     acConfig.autoReconnect = true;
     acConfig.autoReset = false;
     acConfig.portalTimeout = 15 * 60 * 1000;
     acConfig.title = "Remora Config";
     acConfig.ticker = true;
-    acConfig.tickerPort = GPIO_LED1;
-    acConfig.tickerOn = HIGH;
+    acConfig.tickerPort = GPIO_LED3;
+    acConfig.tickerOn = LOW;
     Portal.config(acConfig);
     Portal.begin();
     if (digitalRead(GPIO_VCC_SENSE) == 1)
