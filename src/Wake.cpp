@@ -53,6 +53,14 @@ void wake()
                 if (d.Start(now(), gps.getLat(), gps.getLng()) == "")
                 {
                     Serial.println("error starting the dive");
+                    pinMode(GPIO_LED1, OUTPUT);
+                    for (int i = 0; i < 3; i++)
+                    {
+                        digitalWrite(GPIO_LED1, HIGH);
+                        delay(300);
+                        digitalWrite(GPIO_LED1, LOW);
+                        delay(300);
+                    }
                 }
                 else
                 {
@@ -95,7 +103,7 @@ void wake()
 
 void sleep()
 {
-    uint64_t wakeMask = 1ULL << GPIO_WATER | 1ULL << GPIO_VCC_SENSE;
+    uint64_t wakeMask = 1ULL << GPIO_WATER /*| 1ULL << GPIO_VCC_SENSE*/;
     esp_sleep_enable_ext1_wakeup(wakeMask, ESP_EXT1_WAKEUP_ANY_HIGH);
     Serial.println("Going to sleep now");
     esp_deep_sleep_start();
