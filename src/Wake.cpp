@@ -70,9 +70,12 @@ void wake()
                 }
                 else
                 {
+                    while(1) {
                     pinMode(GPIO_WATER, OUTPUT);
 
                     Serial.print("Water = "), Serial.println(digitalRead(GPIO_WATER));
+                    delay(500);
+                    }
                     while (digitalRead(GPIO_WATER) == 1)
                     {
                         pinMode(GPIO_WATER, OUTPUT);
@@ -230,6 +233,7 @@ int uploadDives()
         }
         //TODO update the index so the dive does not reuplaod
     }
+    return 0;
 }
 
 void ota()

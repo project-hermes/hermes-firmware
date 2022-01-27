@@ -166,7 +166,7 @@ private:
 
             DynamicJsonDocument index(indexByteSize);
 
-            JsonArray dives = index.to<JsonArray>();
+            //JsonArray dives = index.to<JsonArray>();
             //JsonObject dive = dives.createNestedObject();
 
             String buffer;
