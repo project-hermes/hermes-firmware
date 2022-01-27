@@ -13,8 +13,7 @@
 #include <Wake.hpp>
 
 
-
-//this is so bad, I know
+// this is so bad, I know
 #define FIRMWARE_VERSION 2
 
 using namespace std;
@@ -30,6 +29,7 @@ void wake()
     pinMode(GPIO_LED3, OUTPUT);
     pinMode(GPIO_LED4, OUTPUT);
     pinMode(GPIO_WATER, INPUT);
+    pinMode(GPIO_VBATT, INPUT);
     digitalWrite(GPIO_LED3, LOW);
     digitalWrite(GPIO_LED4, LOW);
 
@@ -42,7 +42,7 @@ void wake()
         if (wakeup_reason & mask)
         {
             Serial.printf("Wakeup because %d\n", i);
-            if (i == GPIO_WATER) //dive
+            if (i == GPIO_WATER) // dive
             {
                 pinMode(GPIO_SENSOR_POWER, OUTPUT);
                 digitalWrite(GPIO_SENSOR_POWER, LOW);
@@ -59,9 +59,20 @@ void wake()
                 if (d.Start(now(), gps.getLat(), gps.getLng()) == "")
                 {
                     Serial.println("error starting the dive");
+                    pinMode(GPIO_LED1, OUTPUT);
+                    for (int i = 0; i < 3; i++)
+                    {
+                        digitalWrite(GPIO_LED1, HIGH);
+                        delay(300);
+                        digitalWrite(GPIO_LED1, LOW);
+                        delay(300);
+                    }
                 }
                 else
                 {
+                    pinMode(GPIO_WATER, OUTPUT);
+
+                    Serial.print("Water = "), Serial.println(digitalRead(GPIO_WATER));
                     while (digitalRead(GPIO_WATER) == 1)
                     {
                         pinMode(GPIO_WATER, OUTPUT);
@@ -101,7 +112,7 @@ void wake()
 
 void sleep()
 {
-    uint64_t wakeMask = 1ULL << GPIO_WATER | 1ULL << GPIO_VCC_SENSE;
+    uint64_t wakeMask = 1ULL << GPIO_WATER /*| 1ULL << GPIO_VCC_SENSE*/;
     esp_sleep_enable_ext1_wakeup(wakeMask, ESP_EXT1_WAKEUP_ANY_HIGH);
     Serial.println("Going to sleep now");
     esp_deep_sleep_start();
@@ -114,13 +125,15 @@ void startPortal()
 
     Serial.printf("starting config portal...\n");
     AutoConnectConfig acConfig("Remora Config", "cousteau");
+    acConfig.hostName = "remora";
+    acConfig.homeUri = "/remora";
     acConfig.autoReconnect = true;
     acConfig.autoReset = false;
     acConfig.portalTimeout = 15 * 60 * 1000;
     acConfig.title = "Remora Config";
     acConfig.ticker = true;
-    acConfig.tickerPort = GPIO_LED1;
-    acConfig.tickerOn = HIGH;
+    acConfig.tickerPort = GPIO_LED3;
+    acConfig.tickerOn = LOW;
     Portal.config(acConfig);
     Portal.begin();
 
@@ -146,6 +159,7 @@ void startPortal()
             }
         }
         ota();
+        sendJson();
     }
     while (digitalRead(GPIO_VCC_SENSE) == 1)
     {
@@ -304,4 +318,45 @@ void ota()
     {
         Serial.println("Error Occurred. Error #: " + String(Update.getError()));
     }
+}
+
+void sendJson()
+{
+    // Your Domain name with URL path or IP address with path
+    String serverName = "http://192.168.1.100:1880/update-sensor";
+
+    HTTPClient http;
+
+    char str[100];
+    int httpResponseCode = 0;
+    float batteryLevel = 0;
+
+    digitalWrite(GPIO_LED2, HIGH);
+    int sum = 0;
+    float vbat = 0;
+    while (1)
+    {
+        http.begin(serverName);
+        // If you need an HTTP request with a content type: application/json, use the following:
+        http.addHeader("Content-Type", "application/json");
+        sum = 0;
+        for (int i = 0; i < 5; i++)
+        {
+            sum += analogRead(GPIO_VBATT);
+            delay(100);
+        }
+        vbat = (float)sum / 5.0;
+        batteryLevel = vbat / 4095.0 * 3.3 * 133.0 / 100.0;
+        sprintf(str, "{\"value\":\"%1.2f\"}", batteryLevel);
+        httpResponseCode = http.POST(str);
+        Serial.println(str);
+
+        Serial.print("HTTP Response code: ");
+        Serial.println(httpResponseCode);
+        delay(5000);
+        // Free resources
+        http.end();
+    }
+
+    digitalWrite(GPIO_LED2, LOW);
 }
