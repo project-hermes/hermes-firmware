@@ -64,6 +64,9 @@ void wake()
                 }
                 else
                 {
+                    pinMode(GPIO_WATER, OUTPUT);
+
+                    Serial.print("Water = "), Serial.println(digitalRead(GPIO_WATER));
                     while (digitalRead(GPIO_WATER) == 1)
                     {
                         pinMode(GPIO_WATER, OUTPUT);
