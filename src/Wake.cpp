@@ -115,7 +115,7 @@ void wake()
 
 void sleep()
 {
-    uint64_t wakeMask = 1ULL << GPIO_WATER /*| 1ULL << GPIO_VCC_SENSE*/;
+    uint64_t wakeMask = 1ULL << GPIO_WATER | 1ULL << GPIO_VCC_SENSE;
     esp_sleep_enable_ext1_wakeup(wakeMask, ESP_EXT1_WAKEUP_ANY_HIGH);
     Serial.println("Going to sleep now");
     esp_deep_sleep_start();
