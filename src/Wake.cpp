@@ -144,6 +144,7 @@ void startPortal()
     {
         Portal.handleClient();
     }
+    Serial.println(WiFi.localIP());
 
     Serial.println("Wifi connected, start upload dives");
     uploadDives();
