@@ -12,13 +12,12 @@
 #include <Utils.hpp>
 #include <Wake.hpp>
 
-
 // this is so bad, I know
 #define FIRMWARE_VERSION 2
 
 using namespace std;
 
-//TODO remove
+// TODO remove
 SecureDigital sd;
 
 void wake()
@@ -70,11 +69,12 @@ void wake()
                 }
                 else
                 {
-                    while(1) {
-                    pinMode(GPIO_WATER, OUTPUT);
+                    while (1)
+                    {
+                        pinMode(GPIO_WATER, OUTPUT);
 
-                    Serial.print("Water = "), Serial.println(digitalRead(GPIO_WATER));
-                    delay(500);
+                        Serial.print("Water = "), Serial.println(digitalRead(GPIO_WATER));
+                        delay(500);
                     }
                     while (digitalRead(GPIO_WATER) == 1)
                     {
@@ -145,12 +145,13 @@ void startPortal()
         Portal.handleClient();
     }
 
+    Serial.println("Wifi connected, start upload dives");
     uploadDives();
-    //Serial.println("disconnecting");
-    //cloud.disconnect();
+    // Serial.println("disconnecting");
+    // cloud.disconnect();
     return;
 
-    //turned off for testing
+    // turned off for testing
     /*if (digitalRead(GPIO_VCC_SENSE) == 1)
     {
         while (WiFi.status() == WL_DISCONNECTED)
@@ -231,7 +232,7 @@ int uploadDives()
                 Serial.println("Uploaded silo " + String(i) + " of dive " + diveId);
             }
         }
-        //TODO update the index so the dive does not reuplaod
+        // TODO update the index so the dive does not reuplaod
     }
     return 0;
 }
@@ -322,45 +323,4 @@ void ota()
     {
         Serial.println("Error Occurred. Error #: " + String(Update.getError()));
     }
-}
-
-void sendJson()
-{
-    // Your Domain name with URL path or IP address with path
-    String serverName = "http://192.168.1.100:1880/update-sensor";
-
-    HTTPClient http;
-
-    char str[100];
-    int httpResponseCode = 0;
-    float batteryLevel = 0;
-
-    digitalWrite(GPIO_LED2, HIGH);
-    int sum = 0;
-    float vbat = 0;
-    while (1)
-    {
-        http.begin(serverName);
-        // If you need an HTTP request with a content type: application/json, use the following:
-        http.addHeader("Content-Type", "application/json");
-        sum = 0;
-        for (int i = 0; i < 5; i++)
-        {
-            sum += analogRead(GPIO_VBATT);
-            delay(100);
-        }
-        vbat = (float)sum / 5.0;
-        batteryLevel = vbat / 4095.0 * 3.3 * 133.0 / 100.0;
-        sprintf(str, "{\"value\":\"%1.2f\"}", batteryLevel);
-        httpResponseCode = http.POST(str);
-        Serial.println(str);
-
-        Serial.print("HTTP Response code: ");
-        Serial.println(httpResponseCode);
-        delay(5000);
-        // Free resources
-        http.end();
-    }
-
-    digitalWrite(GPIO_LED2, LOW);
 }

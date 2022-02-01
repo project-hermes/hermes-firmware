@@ -16,7 +16,4 @@ int uploadDives();
 
 void getJWT();
 
-void sendJson();
-
-
 #endif

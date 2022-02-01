@@ -35,9 +35,9 @@ const char *ntp_secondary = "time.nist.gov";
 // it's smaller add "00:" to the start. If it's too big or too small something
 // is probably wrong with your key.
 const char *PRIVATE_KEY =
-    "ba:6f:28:7f:3d:c1:f5:30:b4:85:fd:74:b3:1b:"
-    "31:c2:9f:62:f8:d1:c5:50:aa:9e:b2:88:de:c0:48:"
-    "25:bd:99";
+    "9c:ab:d6:ca:36:19:bc:18:67:27:01:00:14:74:ce:"
+    "1e:0d:35:67:9c:90:86:19:75:21:37:aa:0a:c7:f9:"
+    "7f:8e";
 
 // Time (seconds) to expire token += 20 minutes for drift
 const int jwt_exp_secs = 3600 * 24; // Maximum 24H (3600*24)
@@ -51,56 +51,56 @@ const int jwt_exp_secs = 3600 * 24; // Maximum 24H (3600*24)
 
 const char *root_cert =
     "-----BEGIN CERTIFICATE-----\n"
-    "MIIFuDCCBKCgAwIBAgIRALpApU1GkEc4AgAAAAB8NEowDQYJKoZIhvcNAQELBQAw\n"
-    "QjELMAkGA1UEBhMCVVMxHjAcBgNVBAoTFUdvb2dsZSBUcnVzdCBTZXJ2aWNlczET\n"
-    "MBEGA1UEAxMKR1RTIENBIDFPMTAeFw0yMDA5MjIxNTE2MzhaFw0yMDEyMTUxNTE2\n"
-    "MzhaMG0xCzAJBgNVBAYTAlVTMRMwEQYDVQQIEwpDYWxpZm9ybmlhMRYwFAYDVQQH\n"
-    "Ew1Nb3VudGFpbiBWaWV3MRMwEQYDVQQKEwpHb29nbGUgTExDMRwwGgYDVQQDExNt\n"
-    "cXR0Lmdvb2dsZWFwaXMuY29tMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKC\n"
-    "AQEAzC/ihkr2WQGbmOy6Il1hDCiMj63P6te4spcmoFGU4A1uPzjbn14svYDUzZND\n"
-    "ysdH5Fk3l958i++1CIM/4zL0AOPRU0ARS5360rEt+wEKuxHKlBXoJh9lZvog/fN3\n"
-    "vlxKq+SkJzOSB/P5IjNJ97qaxv0P7yr/WhnSAt4JkTflRdv9gisXKdRYq9o5ksZP\n"
-    "x5406vV4mFVtGEUQ8olrSkQ/LOlfb7oBDyaBfd738bkG9g7NsZVmT2xG3SIHd10a\n"
-    "+9Kx+V1n1iK8B8SOhW++Pg8w5/foX/I8bh2BXAiqRUMbc0zKHObGdIjA0yxE3Mqq\n"
-    "n4XnENU1LgsLvE+lSUk/TgEcbQIDAQABo4ICfDCCAngwDgYDVR0PAQH/BAQDAgWg\n"
-    "MBMGA1UdJQQMMAoGCCsGAQUFBwMBMAwGA1UdEwEB/wQCMAAwHQYDVR0OBBYEFFYl\n"
-    "OEfUQq4QI8kxYMHO9LZI5zGfMB8GA1UdIwQYMBaAFJjR+G4Q68+b7GCfGJAboOt9\n"
-    "Cf0rMGgGCCsGAQUFBwEBBFwwWjArBggrBgEFBQcwAYYfaHR0cDovL29jc3AucGtp\n"
-    "Lmdvb2cvZ3RzMW8xY29yZTArBggrBgEFBQcwAoYfaHR0cDovL3BraS5nb29nL2dz\n"
-    "cjIvR1RTMU8xLmNydDA4BgNVHREEMTAvghNtcXR0Lmdvb2dsZWFwaXMuY29tghht\n"
-    "cXR0LW10bHMuZ29vZ2xlYXBpcy5jb20wIQYDVR0gBBowGDAIBgZngQwBAgIwDAYK\n"
-    "KwYBBAHWeQIFAzAzBgNVHR8ELDAqMCigJqAkhiJodHRwOi8vY3JsLnBraS5nb29n\n"
-    "L0dUUzFPMWNvcmUuY3JsMIIBBQYKKwYBBAHWeQIEAgSB9gSB8wDxAHYAsh4FzIui\n"
-    "zYogTodm+Su5iiUgZ2va+nDnsklTLe+LkF4AAAF0tppJfwAABAMARzBFAiAeTg7U\n"
-    "rUnBcczPn0cCf8Lha9eTcr/B4Lwf5BSWCq6CgQIhAOhpObqBDOhXpvzru3MGIb/5\n"
-    "DMsIRkIpR6bAnqC+jKjfAHcA8JWkWfIA0YJAEC0vk4iOrUv+HUfjmeHQNKawqKqO\n"
-    "snMAAAF0tppJoQAABAMASDBGAiEAvu0QbUVQSToW/4o8R9XBkj4VduIDw/ENaaiJ\n"
-    "L4EYcB8CIQCd2H+Q7IwwcHFYT8UBwgqFGe3VcUaxrUvJOJyOtUhsizANBgkqhkiG\n"
-    "9w0BAQsFAAOCAQEAHkbzYcVoyPuYvrQDv0u3mHNQEiczyjsSPMkxEQW3kAskMfjO\n"
-    "1E8zfsk0JdWyNp3AP4O30JqCPLBKEhkNshlaQfbn5NLcD1CiNXAV0F8OeznjxO14\n"
-    "EL1PITIXQHIy1YOdwiWV+gNvh72e9rHe3O6SXhLVlwMK+S5SNMjq81cxYIM3JsZT\n"
-    "RSlLkDXkWM1a4EBswdqlWoGuO97twi+y81CkQ1/4KCQJDs8suNMHbfd24fK7eakz\n"
-    "47oCb0Am9JcLdkFd9n3pxne3DsiPcLOEGYe4byYkZ10rTYFIrRvSX+bq5A4V2moH\n"
-    "Bf9tXBi3R91QjAe5uH+hv0lPO4DjvWC0SZPPoA==\n"
+    "MIIFdzCCBF+gAwIBAgIQRz3TEzkUgfgKAAAAASuB0jANBgkqhkiG9w0BAQsFADBG\n"
+    "MQswCQYDVQQGEwJVUzEiMCAGA1UEChMZR29vZ2xlIFRydXN0IFNlcnZpY2VzIExM\n"
+    "QzETMBEGA1UEAxMKR1RTIENBIDFDMzAeFw0yMTEyMjcwODE1NTZaFw0yMjAzMjEw\n"
+    "ODE1NTVaMB4xHDAaBgNVBAMTE21xdHQuZ29vZ2xlYXBpcy5jb20wggEiMA0GCSqG\n"
+    "SIb3DQEBAQUAA4IBDwAwggEKAoIBAQCzLFulAevY43wp5A0kJAKLP6Eb5qAigrAq\n"
+    "1FCbk+QRuSsr+O4vP8dXYWwP08aNRqWTmCOaFmhUCmR9CGbkpnxwdOPRB89+zagX\n"
+    "sKYKBSTS10DTxdLqt0h4yC4uKC52zzNHSi86DNhDE4/xLTLB4YA1LDuFSHdLMHDN\n"
+    "ZRJhTN8kw01ULU7U7i16bSFy4utL1hwaBRRiDgYP8P3a19+jdmGl81p5fBX3Ucup\n"
+    "xYZL/GxlJvqA4kh5I5dAXIkOzG4CGrLG5Bbf5zupSZOp0UqOVtfsdIU/4NiXGtBt\n"
+    "6a1KIcOVh/VTFGjXQnXtHom/4QLC6/XXR2BaTUtPUYDrSj2KVeQJAgMBAAGjggKH\n"
+    "MIICgzAOBgNVHQ8BAf8EBAMCBaAwEwYDVR0lBAwwCgYIKwYBBQUHAwEwDAYDVR0T\n"
+    "AQH/BAIwADAdBgNVHQ4EFgQUmVOHZQcYUbRhWDjeU/cRBR0h2egwHwYDVR0jBBgw\n"
+    "FoAUinR/r4XN7pXNPZzQ4kYU83E1HScwagYIKwYBBQUHAQEEXjBcMCcGCCsGAQUF\n"
+    "BzABhhtodHRwOi8vb2NzcC5wa2kuZ29vZy9ndHMxYzMwMQYIKwYBBQUHMAKGJWh0\n"
+    "dHA6Ly9wa2kuZ29vZy9yZXBvL2NlcnRzL2d0czFjMy5kZXIwOAYDVR0RBDEwL4IT\n"
+    "bXF0dC5nb29nbGVhcGlzLmNvbYIYbXF0dC1tdGxzLmdvb2dsZWFwaXMuY29tMCEG\n"
+    "A1UdIAQaMBgwCAYGZ4EMAQIBMAwGCisGAQQB1nkCBQMwPAYDVR0fBDUwMzAxoC+g\n"
+    "LYYraHR0cDovL2NybHMucGtpLmdvb2cvZ3RzMWMzL3pkQVR0MEV4X0ZrLmNybDCC\n"
+    "AQUGCisGAQQB1nkCBAIEgfYEgfMA8QB2ACl5vvCeOTkh8FZzn2Old+W+V32cYAr4\n"
+    "+U1dJlwlXceEAAABffsszdAAAAQDAEcwRQIhAIWCDTvJB8Mzzx1dk3AmgtpZu7qG\n"
+    "Htgb4LmgeURsJeMAAiBC2PIWd130X8rU70vBNFazH23dHlJ8sbqXFEVGc9azHgB3\n"
+    "AN+lXqtogk8fbK3uuF9OPlrqzaISpGpejjsSwCBEXCpzAAABffsszd8AAAQDAEgw\n"
+    "RgIhAKc2WvuXFj8RB6rAqFz8o5WOW/dVodteKtelURH2bFlqAiEAh0mwNElQEUSS\n"
+    "d1tEE0oC/IPsUc8ioBrDJ0CfQFaDbX4wDQYJKoZIhvcNAQELBQADggEBAJ+dUen7\n"
+    "piFwp7KRNY728rfC6jDTveJyLi98sRz/I6K2+VMVXGQrYgLDi9rpCNrpbTQB1NwF\n"
+    "IB+ZjH/hW3W5Ahs+cL+v/T6FgeeMqtUJGJbxWqEekNVBYzRnp9iKCZTm/F/PGNsf\n"
+    "AH+d4JRiP76zPxwcBNQNIYHmbUjV+foqHIrZ5DjbJUwx9YFibQf3rRgdCPZAoM33\n"
+    "8JfkgMnIZl1dYlKH7FRdK6uHaHhm+WdMGY5xpSXT3jMJpUmgLRlOzFZgUjtFA78w\n"
+    "O6lCwiGJxNhnXtvLH9U3F+JOcENFLfKDZs8tFk8lbx8M2fK1Y94ZDBrubw3ebOec\n"
+    "MjhWkLeL63YbuOc=\n"
     "-----END CERTIFICATE-----\n";
-
 // In case we ever need extra topics
 const char *ex_topics[0];
-//const int ex_num_topics = 1;
-//const char* ex_topics[ex_num_topics] = {
-//  "/devices/my-device/tbd/#"
-//};
+// const int ex_num_topics = 1;
+// const char* ex_topics[ex_num_topics] = {
+//   "/devices/my-device/tbd/#"
+// };
 
-//END CONFIG
+// END CONFIG
 
 void messageReceived(String &topic, String &payload)
 {
     Serial.println("incoming: " + topic + " - " + payload);
-    if(parseConfig(payload)==-1){
+    if (parseConfig(payload) == -1)
+    {
         Serial.println("Failed to parse payload from IOT core state change");
-        //TODO need an error logging system at somepoint
+        // TODO need an error logging system at somepoint
     }
-    if(writeConfig()==-1){
+    if (writeConfig() == -1)
+    {
         Serial.println("Could not write config");
     }
 }
@@ -177,12 +177,14 @@ void setupCloudIoT()
     setupWifi();
 
     netClient = new WiFiClientSecure();
-    //netClient->setCACert(root_cert);
+    // netClient->setCACert(root_cert);
 
     mqttClient = new MQTTClient(7000);
+
     mqttClient->setOptions(500, true, 1000); // keepAlive, cleanSession, timeout
 
     mqtt = new CloudIoTCoreMqtt(mqttClient, netClient, device);
+
     mqtt->setUseLts(true);
     mqtt->startMQTT();
 }
