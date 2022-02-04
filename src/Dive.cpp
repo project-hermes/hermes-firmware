@@ -29,7 +29,7 @@ String Dive::End(long time, lat lat, lng lng){
 
 int Dive::NewRecord(Record r)
 {
-    diveRecords[currentRecords] = r;
+    diveRecords[currentRecords] = r; 
     currentRecords++;
     if (currentRecords == siloRecordSize)
     {
