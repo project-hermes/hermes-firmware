@@ -16,7 +16,7 @@
 #define FIRMWARE_VERSION 2
 
 #define uS_TO_S_FACTOR 1000000 /* Conversion factor for micro seconds to seconds */
-#define TIME_TO_SLEEP 5      /* Time ESP32 will go to sleep (in seconds) */
+#define TIME_TO_SLEEP 5        /* Time ESP32 will go to sleep (in seconds) */
 
 using namespace std;
 // TODO remove
@@ -42,16 +42,20 @@ void wake()
     Serial.print("Wake Up reason = "), Serial.println(wakeup_reason);
     if (wakeup_reason == ESP_SLEEP_WAKEUP_TIMER)
     {
+        pinMode(GPIO_LED2, OUTPUT);
+        digitalWrite(GPIO_LED2, HIGH);
+
         // Static diving, timer wake up
         Serial.println("Static diving, timer wake up");
         tsys01 temperatureSensor = tsys01();
         ms5837 depthSensor = ms5837();
         pinMode(GPIO_WATER, OUTPUT);
         Record tempRecord = Record{temperatureSensor.getTemp(), depthSensor.getDepth()};
-        Serial.print("Temperature = "), Serial.println(tempRecord.Temp);
+        Serial.print("Temperature = "), Serial.println(tempRecord.Temp / 1000000000);
         Serial.print("Depth = "), Serial.println(tempRecord.Depth);
 
         staticDive.NewRecord(tempRecord);
+        digitalWrite(GPIO_LED2, LOW);
     }
     else
     {
@@ -135,6 +139,14 @@ void wake()
 
                     if (!staticDiving)
                     {
+                        pinMode(GPIO_LED2, OUTPUT);
+                        for (int i = 0; i < 3; i++)
+                        {
+                            digitalWrite(GPIO_LED2, HIGH);
+                            delay(300);
+                            digitalWrite(GPIO_LED2, LOW);
+                            delay(300);
+                        }
                         staticDiving = true;
                         Serial.println("Start Static Diving");
                         pinMode(GPIO_SENSOR_POWER, OUTPUT);
@@ -173,7 +185,7 @@ void sleep()
     }
     else // if other mode, wake up with water, config, or charging
     {
-        uint64_t wakeMask = 1ULL << GPIO_WATER | 1ULL << GPIO_CONFIG /*| 1ULL << GPIO_VCC_SENSE*/;
+        uint64_t wakeMask = 1ULL << GPIO_WATER | 1ULL << GPIO_CONFIG | 1ULL << GPIO_VCC_SENSE;
         esp_sleep_enable_ext1_wakeup(wakeMask, ESP_EXT1_WAKEUP_ANY_HIGH);
     }
     Serial.println("Going to sleep now");
