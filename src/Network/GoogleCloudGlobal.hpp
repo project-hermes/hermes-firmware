@@ -51,36 +51,16 @@ const int jwt_exp_secs = 3600 * 24; // Maximum 24H (3600*24)
 
 const char *root_cert =
     "-----BEGIN CERTIFICATE-----\n"
-    "MIIFdzCCBF+gAwIBAgIQRz3TEzkUgfgKAAAAASuB0jANBgkqhkiG9w0BAQsFADBG\n"
+    "MIIBxTCCAWugAwIBAgINAfD3nVndblD3QnNxUDAKBggqhkjOPQQDAjBEMQswCQYD\n"
+    "VQQGEwJVUzEiMCAGA1UEChMZR29vZ2xlIFRydXN0IFNlcnZpY2VzIExMQzERMA8G\n"
+    "A1UEAxMIR1RTIExUU1IwHhcNMTgxMTAxMDAwMDQyWhcNNDIxMTAxMDAwMDQyWjBE\n"
     "MQswCQYDVQQGEwJVUzEiMCAGA1UEChMZR29vZ2xlIFRydXN0IFNlcnZpY2VzIExM\n"
-    "QzETMBEGA1UEAxMKR1RTIENBIDFDMzAeFw0yMTEyMjcwODE1NTZaFw0yMjAzMjEw\n"
-    "ODE1NTVaMB4xHDAaBgNVBAMTE21xdHQuZ29vZ2xlYXBpcy5jb20wggEiMA0GCSqG\n"
-    "SIb3DQEBAQUAA4IBDwAwggEKAoIBAQCzLFulAevY43wp5A0kJAKLP6Eb5qAigrAq\n"
-    "1FCbk+QRuSsr+O4vP8dXYWwP08aNRqWTmCOaFmhUCmR9CGbkpnxwdOPRB89+zagX\n"
-    "sKYKBSTS10DTxdLqt0h4yC4uKC52zzNHSi86DNhDE4/xLTLB4YA1LDuFSHdLMHDN\n"
-    "ZRJhTN8kw01ULU7U7i16bSFy4utL1hwaBRRiDgYP8P3a19+jdmGl81p5fBX3Ucup\n"
-    "xYZL/GxlJvqA4kh5I5dAXIkOzG4CGrLG5Bbf5zupSZOp0UqOVtfsdIU/4NiXGtBt\n"
-    "6a1KIcOVh/VTFGjXQnXtHom/4QLC6/XXR2BaTUtPUYDrSj2KVeQJAgMBAAGjggKH\n"
-    "MIICgzAOBgNVHQ8BAf8EBAMCBaAwEwYDVR0lBAwwCgYIKwYBBQUHAwEwDAYDVR0T\n"
-    "AQH/BAIwADAdBgNVHQ4EFgQUmVOHZQcYUbRhWDjeU/cRBR0h2egwHwYDVR0jBBgw\n"
-    "FoAUinR/r4XN7pXNPZzQ4kYU83E1HScwagYIKwYBBQUHAQEEXjBcMCcGCCsGAQUF\n"
-    "BzABhhtodHRwOi8vb2NzcC5wa2kuZ29vZy9ndHMxYzMwMQYIKwYBBQUHMAKGJWh0\n"
-    "dHA6Ly9wa2kuZ29vZy9yZXBvL2NlcnRzL2d0czFjMy5kZXIwOAYDVR0RBDEwL4IT\n"
-    "bXF0dC5nb29nbGVhcGlzLmNvbYIYbXF0dC1tdGxzLmdvb2dsZWFwaXMuY29tMCEG\n"
-    "A1UdIAQaMBgwCAYGZ4EMAQIBMAwGCisGAQQB1nkCBQMwPAYDVR0fBDUwMzAxoC+g\n"
-    "LYYraHR0cDovL2NybHMucGtpLmdvb2cvZ3RzMWMzL3pkQVR0MEV4X0ZrLmNybDCC\n"
-    "AQUGCisGAQQB1nkCBAIEgfYEgfMA8QB2ACl5vvCeOTkh8FZzn2Old+W+V32cYAr4\n"
-    "+U1dJlwlXceEAAABffsszdAAAAQDAEcwRQIhAIWCDTvJB8Mzzx1dk3AmgtpZu7qG\n"
-    "Htgb4LmgeURsJeMAAiBC2PIWd130X8rU70vBNFazH23dHlJ8sbqXFEVGc9azHgB3\n"
-    "AN+lXqtogk8fbK3uuF9OPlrqzaISpGpejjsSwCBEXCpzAAABffsszd8AAAQDAEgw\n"
-    "RgIhAKc2WvuXFj8RB6rAqFz8o5WOW/dVodteKtelURH2bFlqAiEAh0mwNElQEUSS\n"
-    "d1tEE0oC/IPsUc8ioBrDJ0CfQFaDbX4wDQYJKoZIhvcNAQELBQADggEBAJ+dUen7\n"
-    "piFwp7KRNY728rfC6jDTveJyLi98sRz/I6K2+VMVXGQrYgLDi9rpCNrpbTQB1NwF\n"
-    "IB+ZjH/hW3W5Ahs+cL+v/T6FgeeMqtUJGJbxWqEekNVBYzRnp9iKCZTm/F/PGNsf\n"
-    "AH+d4JRiP76zPxwcBNQNIYHmbUjV+foqHIrZ5DjbJUwx9YFibQf3rRgdCPZAoM33\n"
-    "8JfkgMnIZl1dYlKH7FRdK6uHaHhm+WdMGY5xpSXT3jMJpUmgLRlOzFZgUjtFA78w\n"
-    "O6lCwiGJxNhnXtvLH9U3F+JOcENFLfKDZs8tFk8lbx8M2fK1Y94ZDBrubw3ebOec\n"
-    "MjhWkLeL63YbuOc=\n"
+    "QzERMA8GA1UEAxMIR1RTIExUU1IwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAATN\n"
+    "8YyO2u+yCQoZdwAkUNv5c3dokfULfrA6QJgFV2XMuENtQZIG5HUOS6jFn8f0ySlV\n"
+    "eORCxqFyjDJyRn86d+Iko0IwQDAOBgNVHQ8BAf8EBAMCAYYwDwYDVR0TAQH/BAUw\n"
+    "AwEB/zAdBgNVHQ4EFgQUPv7/zFLrvzQ+PfNA0OQlsV+4u1IwCgYIKoZIzj0EAwID\n"
+    "SAAwRQIhAPKuf/VtBHqGw3TUwUIq7TfaExp3bH7bjCBmVXJupT9FAiBr0SmCtsuk\n"
+    "miGgpajjf/gFigGM34F9021bCWs1MbL0SA==\n"
     "-----END CERTIFICATE-----\n";
 // In case we ever need extra topics
 const char *ex_topics[0];
@@ -170,14 +150,14 @@ void setupCloudIoT()
     Serial.println("setting things up");
     timeClient = new NTPClient(ntpUDP);
     Serial.printf("%s %s %s %s\n", PROJECT_ID, REGION_NAME, REGISTRY_ID, DEVICE_ID);
-    device = new CloudIoTCoreDevice(
-        PROJECT_ID, REGION_NAME, REGISTRY_ID, DEVICE_ID,
-        PRIVATE_KEY);
+    device = new CloudIoTCoreDevice(PROJECT_ID, REGION_NAME, REGISTRY_ID, DEVICE_ID,PRIVATE_KEY);
 
     setupWifi();
 
     netClient = new WiFiClientSecure();
-    // netClient->setCACert(root_cert);
+    netClient->setInsecure();
+
+    //netClient->setCACert(root_cert);
 
     mqttClient = new MQTTClient(7000);
 
