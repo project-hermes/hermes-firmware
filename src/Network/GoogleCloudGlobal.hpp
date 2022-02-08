@@ -61,6 +61,19 @@ const char *root_cert =
     "AwEB/zAdBgNVHQ4EFgQUPv7/zFLrvzQ+PfNA0OQlsV+4u1IwCgYIKoZIzj0EAwID\n"
     "SAAwRQIhAPKuf/VtBHqGw3TUwUIq7TfaExp3bH7bjCBmVXJupT9FAiBr0SmCtsuk\n"
     "miGgpajjf/gFigGM34F9021bCWs1MbL0SA==\n"
+    "-----END CERTIFICATE-----\n"
+    "-----BEGIN CERTIFICATE-----\n"
+    "MIIB4TCCAYegAwIBAgIRKjikHJYKBN5CsiilC+g0mAIwCgYIKoZIzj0EAwIwUDEk\n"
+    "MCIGA1UECxMbR2xvYmFsU2lnbiBFQ0MgUm9vdCBDQSAtIFI0MRMwEQYDVQQKEwpH\n"
+    "bG9iYWxTaWduMRMwEQYDVQQDEwpHbG9iYWxTaWduMB4XDTEyMTExMzAwMDAwMFoX\n"
+    "DTM4MDExOTAzMTQwN1owUDEkMCIGA1UECxMbR2xvYmFsU2lnbiBFQ0MgUm9vdCBD\n"
+    "QSAtIFI0MRMwEQYDVQQKEwpHbG9iYWxTaWduMRMwEQYDVQQDEwpHbG9iYWxTaWdu\n"
+    "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEuMZ5049sJQ6fLjkZHAOkrprlOQcJ\n"
+    "FspjsbmG+IpXwVfOQvpzofdlQv8ewQCybnMO/8ch5RikqtlxP6jUuc6MHaNCMEAw\n"
+    "DgYDVR0PAQH/BAQDAgEGMA8GA1UdEwEB/wQFMAMBAf8wHQYDVR0OBBYEFFSwe61F\n"
+    "uOJAf/sKbvu+M8k8o4TVMAoGCCqGSM49BAMCA0gAMEUCIQDckqGgE6bPA7DmxCGX\n"
+    "kPoUVy0D7O48027KqGx2vKLeuwIgJ6iFJzWbVsaj8kfSt24bAgAXqmemFZHe+pTs\n"
+    "ewv4n4Q=\n"
     "-----END CERTIFICATE-----\n";
 // In case we ever need extra topics
 const char *ex_topics[0];
@@ -155,13 +168,15 @@ void setupCloudIoT()
     setupWifi();
 
     netClient = new WiFiClientSecure();
-    netClient->setInsecure();
+    //netClient->setInsecure();
 
-    //netClient->setCACert(root_cert);
+    netClient->setCACert(root_cert);
 
-    mqttClient = new MQTTClient(7000);
+    //mqttClient = new MQTTClient(7000);
+    mqttClient = new MQTTClient(512);
 
-    mqttClient->setOptions(500, true, 1000); // keepAlive, cleanSession, timeout
+    //mqttClient->setOptions(500, true, 1000); // keepAlive, cleanSession, timeout
+    mqttClient->setOptions(180, true, 1000); // keepAlive, cleanSession, timeout
 
     mqtt = new CloudIoTCoreMqtt(mqttClient, netClient, device);
 
