@@ -168,15 +168,12 @@ void setupCloudIoT()
     setupWifi();
 
     netClient = new WiFiClientSecure();
-    //netClient->setInsecure();
+    netClient->setInsecure();
+    //netClient->setCACert(root_cert);
 
-    netClient->setCACert(root_cert);
+    mqttClient = new MQTTClient(7000);
 
-    //mqttClient = new MQTTClient(7000);
-    mqttClient = new MQTTClient(512);
-
-    //mqttClient->setOptions(500, true, 1000); // keepAlive, cleanSession, timeout
-    mqttClient->setOptions(180, true, 1000); // keepAlive, cleanSession, timeout
+    mqttClient->setOptions(500, true, 1000); // keepAlive, cleanSession, timeout
 
     mqtt = new CloudIoTCoreMqtt(mqttClient, netClient, device);
 

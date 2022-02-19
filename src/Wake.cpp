@@ -16,7 +16,10 @@
 #define FIRMWARE_VERSION 2
 
 #define uS_TO_S_FACTOR 1000000 /* Conversion factor for micro seconds to seconds */
-#define TIME_TO_SLEEP 5        /* Time ESP32 will go to sleep (in seconds) */
+#define TIME_TO_SLEEP 5        /* Time ESP32 will go to sleep (in seconds) between each static record */
+
+#define minDepth 0 /* Min depth to validate dynamic dive */
+#define maxCounter 30 /* Number of No Water to end dive */
 
 using namespace std;
 // TODO remove
@@ -69,7 +72,7 @@ void wake()
             if (wakeup_reason & mask)
             {
                 Serial.printf("Wakeup because %d\n", i);
-                if (i == GPIO_WATER) // dive
+                if (i == GPIO_WATER) // Start dive
                 {
                     pinMode(GPIO_SENSOR_POWER, OUTPUT);
                     digitalWrite(GPIO_SENSOR_POWER, LOW);
@@ -97,6 +100,11 @@ void wake()
                     }
                     else
                     {
+                        /* false while depth higher than minDepth */
+                        bool validDive = false;
+                        int count = 0;
+                        double depth, temp;
+                        /* Test water sensor */
                         while (1)
                         {
                             pinMode(GPIO_WATER, OUTPUT);
@@ -104,10 +112,27 @@ void wake()
                             Serial.print("Water = "), Serial.println(digitalRead(GPIO_WATER));
                             delay(500);
                         }
-                        while (digitalRead(GPIO_WATER) == 1)
+                        /* End Test water sensor */
+
+                        while (count < maxCounter)
                         {
+                            if (digitalRead(GPIO_WATER) == 1)
+                                count = 0; // reset No water counter
+                            else
+                                count++; //if no water counter++
+
                             pinMode(GPIO_WATER, OUTPUT);
-                            Record tempRecord = Record{temperatureSensor.getTemp(), depthSensor.getDepth()};
+
+                            temp = temperatureSensor.getTemp();
+                            depth = depthSensor.getDepth();
+
+                            if (validDive == false) // if dive still not valid, check if depthMin reached
+                            {
+                                if (depth < minDepth)
+                                    validDive = true; // if minDepth reached, dive is valid
+                            }
+
+                            Record tempRecord = Record{temp, depth};
                             d.NewRecord(tempRecord);
 
                             delay(1000);
@@ -122,6 +147,7 @@ void wake()
                             pinMode(GPIO_WATER, INPUT);
                             led_on = !led_on;
                         }
+
                         if (d.End(now(), gps.getLat(), gps.getLng()) == "")
                         {
                             Serial.println("error ending the dive");
@@ -260,7 +286,7 @@ int uploadDives()
         return -1;
     }
     deserializeJson(indexJson, data);
-
+    log_v("\nNb dives recorded = %d\n");
     for (int i = 0; i < indexJson.size(); i++)
     {
         JsonObject dive = indexJson[i].as<JsonObject>();
