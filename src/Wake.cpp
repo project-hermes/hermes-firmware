@@ -452,17 +452,19 @@ void dynamicDive()
             led_on = !led_on;
         }
 
-        if (validDive)
+        String ID = d.End(now(), gps.getLat(), gps.getLng());
+
+        if (ID == "")
         {
-            if (d.End(now(), gps.getLat(), gps.getLng()) == "")
-            {
-                Serial.println("error ending the dive");
-            }
+            Serial.println("error ending the dive");
         }
         else
         {
-            Serial.println("Dive not valid");
-            //TODO : Delete not valid records
+            if (!validDive)
+            {
+                d.deleteID(ID);
+                Serial.println("Dive not valid, record deleted");
+            }
         }
     }
 }
