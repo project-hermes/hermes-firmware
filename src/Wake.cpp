@@ -26,7 +26,7 @@ using namespace std;
 SecureDigital sd;
 
 // variables permanentes pour le mode de plongée statique
-//RTC_DATA_ATTR Dive staticDive(&sd);
+// RTC_DATA_ATTR Dive staticDive(&sd);
 RTC_DATA_ATTR bool staticDiving = false;
 
 void wake()
@@ -452,14 +452,21 @@ void dynamicDive()
             led_on = !led_on;
         }
 
-        if (d.End(now(), gps.getLat(), gps.getLng()) == "")
+        if (validDive)
         {
-            Serial.println("error ending the dive");
+            if (d.End(now(), gps.getLat(), gps.getLng()) == "")
+            {
+                Serial.println("error ending the dive");
+            }
+        }
+        else
+        {
+            Serial.println("Dive not valid");
+            //TODO : Delete not valid records
         }
     }
 }
 
 void staticDive()
 {
-
 }
