@@ -18,15 +18,15 @@
 #define uS_TO_S_FACTOR 1000000 /* Conversion factor for micro seconds to seconds */
 #define TIME_TO_SLEEP 5        /* Time ESP32 will go to sleep (in seconds) between each static record */
 
-#define minDepth 0 /* Min depth to validate dynamic dive */
-#define maxCounter 30 /* Number of No Water to end dive */
+#define minDepth 0    /* Min depth to validate dynamic dive */
+#define maxCounter 10 /* Number of No Water to end dive */
 
 using namespace std;
 // TODO remove
 SecureDigital sd;
 
 // variables permanentes pour le mode de plongée statique
-RTC_DATA_ATTR Dive staticDive(&sd);
+//RTC_DATA_ATTR Dive staticDive(&sd);
 RTC_DATA_ATTR bool staticDiving = false;
 
 void wake()
@@ -43,6 +43,7 @@ void wake()
 
     uint64_t wakeup_reason = esp_sleep_get_wakeup_cause();
     Serial.print("Wake Up reason = "), Serial.println(wakeup_reason);
+    /*
     if (wakeup_reason == ESP_SLEEP_WAKEUP_TIMER)
     {
         pinMode(GPIO_LED2, OUTPUT);
@@ -62,147 +63,98 @@ void wake()
     }
     else
     {
-        wakeup_reason = esp_sleep_get_ext1_wakeup_status();
+        */
+    wakeup_reason = esp_sleep_get_ext1_wakeup_status();
 
-        uint64_t mask = 1;
-        int i = 0;
-        bool led_on = false;
-        while (i < 64)
+    uint64_t mask = 1;
+    int i = 0;
+    while (i < 64)
+    {
+        if (wakeup_reason & mask)
         {
-            if (wakeup_reason & mask)
+            Serial.printf("Wakeup because %d\n", i);
+            if (i == GPIO_WATER) // Start dive
             {
-                Serial.printf("Wakeup because %d\n", i);
-                if (i == GPIO_WATER) // Start dive
+                if (staticDiving)
                 {
-                    pinMode(GPIO_SENSOR_POWER, OUTPUT);
-                    digitalWrite(GPIO_SENSOR_POWER, LOW);
-                    delay(10);
-                    Wire.begin(I2C_SDA, I2C_SCL);
-                    delay(10);
-
-                    GNSS gps = GNSS();
-                    sd = SecureDigital();
-                    Dive d(&sd);
-                    tsys01 temperatureSensor = tsys01();
-                    ms5837 depthSensor = ms5837();
-
-                    if (d.Start(now(), gps.getLat(), gps.getLng()) == "")
-                    {
-                        Serial.println("error starting the dive");
-                        pinMode(GPIO_LED1, OUTPUT);
-                        for (int i = 0; i < 3; i++)
-                        {
-                            digitalWrite(GPIO_LED1, HIGH);
-                            delay(300);
-                            digitalWrite(GPIO_LED1, LOW);
-                            delay(300);
-                        }
-                    }
-                    else
-                    {
-                        /* false while depth higher than minDepth */
-                        bool validDive = false;
-                        int count = 0;
-                        double depth, temp;
-                        /* Test water sensor */
-                        while (1)
-                        {
-                            pinMode(GPIO_WATER, OUTPUT);
-
-                            Serial.print("Water = "), Serial.println(digitalRead(GPIO_WATER));
-                            delay(500);
-                        }
-                        /* End Test water sensor */
-
-                        while (count < maxCounter)
-                        {
-                            if (digitalRead(GPIO_WATER) == 1)
-                                count = 0; // reset No water counter
-                            else
-                                count++; //if no water counter++
-
-                            pinMode(GPIO_WATER, OUTPUT);
-
-                            temp = temperatureSensor.getTemp();
-                            depth = depthSensor.getDepth();
-
-                            if (validDive == false) // if dive still not valid, check if depthMin reached
-                            {
-                                if (depth < minDepth)
-                                    validDive = true; // if minDepth reached, dive is valid
-                            }
-
-                            Record tempRecord = Record{temp, depth};
-                            d.NewRecord(tempRecord);
-
-                            delay(1000);
-                            if (led_on)
-                            {
-                                digitalWrite(GPIO_LED2, HIGH);
-                            }
-                            else
-                            {
-                                digitalWrite(GPIO_LED2, LOW);
-                            }
-                            pinMode(GPIO_WATER, INPUT);
-                            led_on = !led_on;
-                        }
-
-                        if (d.End(now(), gps.getLat(), gps.getLng()) == "")
-                        {
-                            Serial.println("error ending the dive");
-                        }
-                    }
-
-                    Serial.println("done");
                 }
-                else if (i == GPIO_VCC_SENSE) // wifi config
+                else
                 {
-                    startPortal();
+                    dynamicDive();
                 }
-                else if (i == GPIO_CONFIG) // button config
-                {
-
-                    if (!staticDiving)
-                    {
-                        pinMode(GPIO_LED2, OUTPUT);
-                        for (int i = 0; i < 3; i++)
-                        {
-                            digitalWrite(GPIO_LED2, HIGH);
-                            delay(300);
-                            digitalWrite(GPIO_LED2, LOW);
-                            delay(300);
-                        }
-                        staticDiving = true;
-                        Serial.println("Start Static Diving");
-                        pinMode(GPIO_SENSOR_POWER, OUTPUT);
-                        digitalWrite(GPIO_SENSOR_POWER, LOW);
-                        delay(10);
-                        Wire.begin(I2C_SDA, I2C_SCL);
-                        delay(10);
-
-                        GNSS gps = GNSS();
-                        sd = SecureDigital();
-
-                        String diveId = staticDive.Start(now(), gps.getLat(), gps.getLng());
-                        Serial.print("Dive ID = "), Serial.println(diveId);
-                    }
-                    else
-                    {
-                        staticDiving = false;
-                        Serial.println("Stop static Diving ");
-                    }
-                }
+                Serial.println("done");
             }
+            else if (i == GPIO_VCC_SENSE) // wifi config
+            {
+                startPortal();
+            }
+            else if (i == GPIO_CONFIG) // button config (switch between diving modes)
+            {
+                staticDiving = !staticDiving;
 
-            i++;
-            mask = mask << 1;
+                if (staticDiving)
+                {
+                    Serial.println("Static Diving");
+
+                    digitalWrite(GPIO_LED4, HIGH);
+                    delay(3000);
+                    digitalWrite(GPIO_LED4, LOW);
+                }
+                else
+                {
+                    Serial.println("Dynamic diving");
+
+                    for (int i = 0; i < 10; i++)
+                    {
+                        digitalWrite(GPIO_LED4, HIGH);
+                        delay(150);
+                        digitalWrite(GPIO_LED4, LOW);
+                        delay(150);
+                    }
+                }
+                /*
+                 if (!staticDiving)
+                                    {
+                                        pinMode(GPIO_LED2, OUTPUT);
+                                        for (int i = 0; i < 3; i++)
+                                        {
+                                            digitalWrite(GPIO_LED2, HIGH);
+                                            delay(300);
+                                            digitalWrite(GPIO_LED2, LOW);
+                                            delay(300);
+                                        }
+                                        staticDiving = true;
+                                        Serial.println("Start Static Diving");
+                                        pinMode(GPIO_SENSOR_POWER, OUTPUT);
+                                        digitalWrite(GPIO_SENSOR_POWER, LOW);
+                                        delay(10);
+                                        Wire.begin(I2C_SDA, I2C_SCL);
+                                        delay(10);
+
+                                        GNSS gps = GNSS();
+                                        sd = SecureDigital();
+
+                                        String diveId = staticDive.Start(now(), gps.getLat(), gps.getLng());
+                                        Serial.print("Dive ID = "), Serial.println(diveId);
+                                    }
+                                    else
+                                    {
+                                        staticDiving = false;
+                                        Serial.println("Stop static Diving ");
+                                    }
+                                    */
+            }
         }
+
+        i++;
+        mask = mask << 1;
     }
+    //}
 }
 
 void sleep()
 {
+    /*
     if (staticDiving) // if static diving, wake up with timer or config button
     {
         uint64_t wakeMask = 1ULL << GPIO_CONFIG;
@@ -210,10 +162,10 @@ void sleep()
         esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_S_FACTOR);
     }
     else // if other mode, wake up with water, config, or charging
-    {
-        uint64_t wakeMask = 1ULL << GPIO_WATER | 1ULL << GPIO_CONFIG | 1ULL << GPIO_VCC_SENSE;
-        esp_sleep_enable_ext1_wakeup(wakeMask, ESP_EXT1_WAKEUP_ANY_HIGH);
-    }
+    {*/
+    uint64_t wakeMask = 1ULL << GPIO_WATER | 1ULL << GPIO_CONFIG /*| 1ULL << GPIO_VCC_SENSE*/;
+    esp_sleep_enable_ext1_wakeup(wakeMask, ESP_EXT1_WAKEUP_ANY_HIGH);
+    // }
     Serial.println("Going to sleep now");
     esp_deep_sleep_start();
 }
@@ -421,4 +373,93 @@ void ota()
     {
         Serial.println("Error Occurred. Error #: " + String(Update.getError()));
     }
+}
+
+void dynamicDive()
+{
+    pinMode(GPIO_SENSOR_POWER, OUTPUT);
+    digitalWrite(GPIO_SENSOR_POWER, LOW);
+    delay(10);
+    Wire.begin(I2C_SDA, I2C_SCL);
+    delay(10);
+
+    GNSS gps = GNSS();
+    sd = SecureDigital();
+    Dive d(&sd);
+    tsys01 temperatureSensor = tsys01();
+    ms5837 depthSensor = ms5837();
+    bool led_on = false;
+
+    if (d.Start(now(), gps.getLat(), gps.getLng()) == "")
+    {
+        Serial.println("error starting the dive");
+        pinMode(GPIO_LED1, OUTPUT);
+        for (int i = 0; i < 3; i++)
+        {
+            digitalWrite(GPIO_LED1, HIGH);
+            delay(300);
+            digitalWrite(GPIO_LED1, LOW);
+            delay(300);
+        }
+    }
+    else
+    {
+        /* false while depth higher than minDepth */
+        bool validDive = false;
+        int count = 0;
+        double depth, temp;
+        /* Test water sensor */
+        while (1)
+        {
+            pinMode(GPIO_WATER, OUTPUT);
+
+            Serial.print("Water = "), Serial.println(digitalRead(GPIO_WATER));
+            delay(500);
+        }
+        /* End Test water sensor */
+
+        while (count < maxCounter)
+        {
+            if (digitalRead(GPIO_WATER) == 1)
+                count = 0; // reset No water counter
+            else
+                count++; // if no water counter++
+
+            pinMode(GPIO_WATER, OUTPUT);
+
+            temp = temperatureSensor.getTemp();
+            depth = depthSensor.getDepth();
+
+            if (validDive == false) // if dive still not valid, check if depthMin reached
+            {
+                if (depth < minDepth)
+                    validDive = true; // if minDepth reached, dive is valid
+            }
+
+            Record tempRecord = Record{temp, depth};
+            d.NewRecord(tempRecord);
+
+            delay(1000);
+            if (led_on)
+            {
+                digitalWrite(GPIO_LED2, HIGH);
+            }
+            else
+            {
+                digitalWrite(GPIO_LED2, LOW);
+            }
+            pinMode(GPIO_WATER, INPUT);
+            led_on = !led_on;
+        }
+
+        if (d.End(now(), gps.getLat(), gps.getLng()) == "")
+        {
+            Serial.println("error ending the dive");
+        }
+    }
+}
+
+void staticDive()
+{
+
 }

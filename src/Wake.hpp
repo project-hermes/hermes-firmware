@@ -4,6 +4,8 @@
 #include <Network/GoogleCloudIOT.hpp>
 
 void wake();
+void dynamicDive();
+void staticDive();
 
 void sleep();
 
@@ -15,5 +17,6 @@ void ota();
 int uploadDives();
 
 void getJWT();
+
 
 #endif
