@@ -8,8 +8,30 @@ Dive::Dive(Storage *s)
     storage = s;
 }
 
+void Dive::init()
+{
+
+    ID = "";
+    order = 0;
+    currentRecords = 0;
+    Record *diveRecords;
+    metadata.ID = "";
+    metadata.startTime = 0;
+    metadata.endTime = 0;
+    metadata.freq = 0;
+    metadata.numSilos = 0;
+    metadata.siloSize = 0;
+    metadata.startLat = 0;
+    metadata.startLng = 0;
+    metadata.endLat = 0;
+    metadata.endLng = 0;
+    diveRecords->Temp = 0;
+    diveRecords->Depth = 0;
+}
+
 String Dive::Start(long time, lat lat, lng lng)
 {
+    init();
     Serial.println(time);
     ID = createID(time);
     diveRecords = new Record[siloRecordSize];
@@ -190,5 +212,5 @@ String Dive::createID(long time)
 
 void Dive::deleteID(String ID)
 {
-storage->removeDirectory("/" + ID);
+    storage->removeDirectory("/" + ID);
 }

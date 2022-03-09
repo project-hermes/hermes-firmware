@@ -46,14 +46,15 @@ private:
     String ID;
     DiveMetadata metadata;
     int order = 0;
+    int currentRecords = 0;
+    Record *diveRecords;
     const String recordSchema[2] = {"temp", "depth"};
     const int siloRecordSize = 300;
     const int siloByteSize = 27000;
     const int indexByteSize = 27000;
     const String indexPath = "/index.json";
-    int currentRecords = 0;
-    Record *diveRecords;
 
+    void init();
     int writeSilo();
     int writeMetadataStart(long time, double lat, double lng, int freq);
     int writeMetadataEnd(long time, double lat, double lng);
