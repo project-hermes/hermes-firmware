@@ -6,6 +6,7 @@ SecureDigital sd;
 // variables permanentes pour le mode de plongée statique
 RTC_DATA_ATTR Dive staticDive(&sd);
 RTC_DATA_ATTR bool staticMode = false;
+RTC_DATA_ATTR int staticCount;
 
 void wake()
 {
@@ -24,9 +25,23 @@ void wake()
 
     if (wakeup_reason == ESP_SLEEP_WAKEUP_TIMER)
     {
-        // new record
+        pinMode(GPIO_WATER, INPUT);
+        if (digitalRead(GPIO_WATER) == 1)
+            staticCount = 0; // reset No water counter
+        else
+            staticCount++;           // if no water counter++
+        pinMode(GPIO_WATER, OUTPUT); // set gpio water pin as output to avoid corrosion
 
-        sleep(true);
+        if (staticCount < maxStaticCounter)
+        {
+            recordStaticDive(); // new static record
+            sleep(true); //sleep with timer
+        }
+        else
+        {
+            endStaticDive();
+            sleep(); //sleep without timer waiting for other dive or config button
+        }
     }
     else
     {
@@ -45,6 +60,7 @@ void wake()
                     if (staticMode)
                     { // if Water wake up and staticMode
                         startStaticDive();
+                        sleep(true);
                     }
                     else
                     {
@@ -142,23 +158,24 @@ void dynamicDive()
         int count = 0;
         double depth, temp;
         /* Test water sensor */
-        while (1)
-        {
-            pinMode(GPIO_WATER, OUTPUT);
+        /*         while (1)
+                {
+                    pinMode(GPIO_WATER, INPUT);
 
-            Serial.print("Water = "), Serial.println(digitalRead(GPIO_WATER));
-            delay(500);
-        }
+                    Serial.print("Water = "), Serial.println(digitalRead(GPIO_WATER));
+                    delay(500);
+                } */
         /* End Test water sensor */
 
         while (count < maxCounter)
         {
+            pinMode(GPIO_WATER, INPUT);
             if (digitalRead(GPIO_WATER) == 1)
                 count = 0; // reset No water counter
             else
                 count++; // if no water counter++
 
-            pinMode(GPIO_WATER, OUTPUT);
+            pinMode(GPIO_WATER, OUTPUT); // set gpio water pin as output to avoid corrosion
 
             temp = temperatureSensor.getTemp();
             depth = depthSensor.getDepth();
@@ -181,7 +198,6 @@ void dynamicDive()
             {
                 digitalWrite(GPIO_LED2, LOW);
             }
-            pinMode(GPIO_WATER, INPUT);
             led_on = !led_on;
         }
 
@@ -215,6 +231,8 @@ void startStaticDive()
     tsys01 temperatureSensor = tsys01();
     ms5837 depthSensor = ms5837();
 
+    staticCount = 0;
+
     if (staticDive.Start(now(), gps.getLat(), gps.getLng()) == "")
     {
         Serial.println("error starting the static dive");
@@ -229,6 +247,14 @@ void startStaticDive()
     }
     else
     {
+        pinMode(GPIO_LED4, OUTPUT);
+        for (int i = 0; i < 3; i++)
+        {
+            digitalWrite(GPIO_LED4, HIGH);
+            delay(300);
+            digitalWrite(GPIO_LED4, LOW);
+            delay(300);
+        }
         double depth, temp;
 
         temp = temperatureSensor.getTemp();
@@ -237,6 +263,37 @@ void startStaticDive()
         Record tempRecord = Record{temp, depth};
         staticDive.NewRecord(tempRecord);
     }
+}
 
-    sleep(true);
+void recordStaticDive()
+{
+    pinMode(GPIO_SENSOR_POWER, OUTPUT);
+    digitalWrite(GPIO_SENSOR_POWER, LOW);
+    delay(10);
+    Wire.begin(I2C_SDA, I2C_SCL);
+    delay(10);
+
+    GNSS gps = GNSS();
+    sd = SecureDigital();
+    tsys01 temperatureSensor = tsys01();
+    ms5837 depthSensor = ms5837();
+    double depth, temp;
+
+    temp = temperatureSensor.getTemp();
+    depth = depthSensor.getDepth();
+
+    Record tempRecord = Record{temp, depth};
+    staticDive.NewRecord(tempRecord);
+}
+
+void endStaticDive()
+{
+
+    GNSS gps = GNSS();
+    String ID = staticDive.End(now(), gps.getLat(), gps.getLng());
+
+    if (ID == "")
+    {
+        Serial.println("error ending the dive");
+    }
 }
