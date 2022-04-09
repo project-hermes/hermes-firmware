@@ -40,7 +40,7 @@ void wake()
         else
         {
             endStaticDive();
-            sleep(); //sleep without timer waiting for other dive or config button
+            sleep(false); //sleep without timer waiting for other dive or config button
         }
     }
     else

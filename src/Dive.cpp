@@ -72,25 +72,58 @@ int Dive::NewRecord(Record r)
 
 int Dive::writeSilo()
 {
-    // FYI if this is not big enough it will just cut off what can't fit
-    DynamicJsonDocument jsonSilo(siloByteSize);
 
-    jsonSilo["id"] = ID;
-    jsonSilo["order"] = order;
-    order++;
+    String path = "/" + ID + ".json";
 
-    JsonArray records = jsonSilo.createNestedArray("records");
-    for (int i = 0; i < siloRecordSize; i++)
+    // this should only happen to a new dive record
+    if (storage->findFile(path) == -1)
     {
-        JsonArray record = records.createNestedArray();
-        record.add(diveRecords[i].Temp);
-        record.add(diveRecords[i].Depth);
+
+        DynamicJsonDocument jsonSilo(siloByteSize);
+
+        jsonSilo["id"] = ID;
+
+        JsonArray records = jsonSilo.createNestedArray("records");
+        for (int i = 0; i < siloRecordSize; i++)
+        {
+            JsonArray record = records.createNestedArray();
+            record.add(diveRecords[i].Temp);
+            record.add(diveRecords[i].Depth);
+        }
+
+        String buffer;
+        serializeJson(jsonSilo, buffer);
+
+        return storage->writeFile(path, buffer);
     }
+    else
+    {
+        String recordsID = storage->readFile(path);
+        if (recordsID == "")
+        {
+            Serial.println("Could not read previous ID records file");
+            return -1;
+        }
+        else
+        {
+            DynamicJsonDocument newRecordsID(siloByteSize);
+            deserializeJson(newRecordsID, recordsID);
+            JsonArray dives = newRecordsID.to<JsonArray>();
 
-    String buffer;
-    serializeJson(jsonSilo, buffer);
+            JsonArray records = newRecordsID.createNestedArray("records");
+            for (int i = 0; i < siloRecordSize; i++)
+            {
+                JsonArray record = records.createNestedArray();
+                record.add(diveRecords[i].Temp);
+                record.add(diveRecords[i].Depth);
+            }
 
-    return storage->writeFile(String("/" + ID + "/silo_" + order + ".json").c_str(), buffer);
+            String buffer;
+            serializeJson(newRecordsID, buffer);
+
+            return storage->writeFile(path, buffer);
+        }
+    }
 }
 
 int Dive::writeMetadataStart(long time, double lat, double lng, int freq)
