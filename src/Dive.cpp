@@ -29,13 +29,13 @@ void Dive::init()
     diveRecords->Depth = 0;
 }
 
-String Dive::Start(long time, lat lat, lng lng)
+String Dive::Start(long time, lat lat, lng lng, int freq, bool mode)
 {
     init();
     Serial.println(time);
     ID = createID(time);
     diveRecords = new Record[siloRecordSize];
-    if (writeMetadataStart(time, lat, lng, 1) == -1)
+    if (writeMetadataStart(time, lat, lng, freq, mode) == -1)
     {
         return "";
     }
@@ -73,7 +73,7 @@ int Dive::NewRecord(Record r)
 int Dive::writeSilo()
 {
 
-    String path = "/" + ID + ".json";
+    String path = "/" + ID + "/diveRecords.json";
 
     // this should only happen to a new dive record
     if (storage->findFile(path) == -1)
@@ -82,7 +82,6 @@ int Dive::writeSilo()
         DynamicJsonDocument jsonSilo(siloByteSize);
 
         jsonSilo["id"] = ID;
-
         JsonArray records = jsonSilo.createNestedArray("records");
         for (int i = 0; i < siloRecordSize; i++)
         {
@@ -98,35 +97,34 @@ int Dive::writeSilo()
     }
     else
     {
-        String recordsID = storage->readFile(path);
-        if (recordsID == "")
+        String records = storage->readFile(path);
+        if (records == "")
         {
             Serial.println("Could not read previous ID records file");
             return -1;
         }
         else
         {
-            DynamicJsonDocument newRecordsID(siloByteSize);
-            deserializeJson(newRecordsID, recordsID);
-            JsonArray dives = newRecordsID.to<JsonArray>();
 
-            JsonArray records = newRecordsID.createNestedArray("records");
+            DynamicJsonDocument newRecords(siloByteSize);
+            deserializeJson(newRecords, records);
+
             for (int i = 0; i < siloRecordSize; i++)
             {
-                JsonArray record = records.createNestedArray();
+                JsonArray record = newRecords["records"].createNestedArray();
                 record.add(diveRecords[i].Temp);
                 record.add(diveRecords[i].Depth);
             }
 
             String buffer;
-            serializeJson(newRecordsID, buffer);
+            serializeJson(newRecords, buffer);
 
             return storage->writeFile(path, buffer);
         }
     }
 }
 
-int Dive::writeMetadataStart(long time, double lat, double lng, int freq)
+int Dive::writeMetadataStart(long time, double lat, double lng, int freq, bool mode)
 {
     StaticJsonDocument<1024> mdata;
 
@@ -134,6 +132,7 @@ int Dive::writeMetadataStart(long time, double lat, double lng, int freq)
 
     mdata["deviceId"] = remoraID();
     mdata["diveId"] = ID;
+    mdata["mode"] = (mode==1 ? "Static" : "Dynamic");
     mdata["startTime"] = time;
     mdata["startLat"] = lat;
     mdata["startLng"] = lng;

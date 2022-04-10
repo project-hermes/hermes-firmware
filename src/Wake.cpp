@@ -11,7 +11,6 @@ RTC_DATA_ATTR int staticCount;
 void wake()
 {
     Serial.printf("firmware version:%d\n", FIRMWARE_VERSION);
-
     pinMode(GPIO_LED2, OUTPUT);
     pinMode(GPIO_LED3, OUTPUT);
     pinMode(GPIO_LED4, OUTPUT);
@@ -35,12 +34,12 @@ void wake()
         if (staticCount < maxStaticCounter)
         {
             recordStaticDive(); // new static record
-            sleep(true); //sleep with timer
+            sleep(true);        // sleep with timer
         }
         else
         {
             endStaticDive();
-            sleep(false); //sleep without timer waiting for other dive or config button
+            sleep(false); // sleep without timer waiting for other dive or config button
         }
     }
     else
@@ -112,7 +111,7 @@ void sleep(bool timer)
     {
         uint64_t wakeMask = 1ULL << GPIO_CONFIG;
         esp_sleep_enable_ext1_wakeup(wakeMask, ESP_EXT1_WAKEUP_ANY_HIGH);
-        esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_S_FACTOR);
+        esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP_STATIC * uS_TO_S_FACTOR);
     }
     else // if other mode, wake up with water, config, or charging
     {
@@ -139,7 +138,7 @@ void dynamicDive()
     ms5837 depthSensor = ms5837();
     bool led_on = false;
 
-    if (d.Start(now(), gps.getLat(), gps.getLng()) == "")
+    if (d.Start(now(), gps.getLat(), gps.getLng(),TIME_DYNAMIC_MODE, staticMode) == "")
     {
         Serial.println("error starting the dive");
         pinMode(GPIO_LED1, OUTPUT);
@@ -189,7 +188,7 @@ void dynamicDive()
             Record tempRecord = Record{temp, depth};
             d.NewRecord(tempRecord);
 
-            delay(1000);
+            delay(TIME_DYNAMIC_MODE);
             if (led_on)
             {
                 digitalWrite(GPIO_LED2, HIGH);
@@ -233,7 +232,7 @@ void startStaticDive()
 
     staticCount = 0;
 
-    if (staticDive.Start(now(), gps.getLat(), gps.getLng()) == "")
+    if (staticDive.Start(now(), gps.getLat(), gps.getLng(),TIME_TO_SLEEP_STATIC, staticMode) == "")
     {
         Serial.println("error starting the static dive");
         pinMode(GPIO_LED1, OUTPUT);

@@ -36,7 +36,7 @@ class Dive
 public:
     Dive();
     Dive(Storage *s);
-    String Start(long time, lat lat, lng lng);
+    String Start(long time, lat lat, lng lng, int freq, bool mode);
     String End(long time, lat lat, lng lng);
     int NewRecord(Record r);
     void deleteID(String ID);
@@ -56,7 +56,7 @@ private:
 
     void init();
     int writeSilo();
-    int writeMetadataStart(long time, double lat, double lng, int freq);
+    int writeMetadataStart(long time, double lat, double lng, int freq, bool mode);
     int writeMetadataEnd(long time, double lat, double lng);
     int updateIndex();
     String createID(long time);
