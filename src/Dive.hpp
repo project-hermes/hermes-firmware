@@ -4,6 +4,7 @@
 #include <mbedtls/md.h>
 #include <WiFi.h>
 #include <ArduinoJson.h>
+#include <AutoConnect.h>
 
 #include <Storage/Storage.hpp>
 #include <Types.hpp>
@@ -40,6 +41,8 @@ public:
     String End(long time, lat lat, lng lng);
     int NewRecord(Record r);
     void deleteID(String ID);
+    void sendJson();
+    void postSecure();
 
 private:
     Storage *storage;

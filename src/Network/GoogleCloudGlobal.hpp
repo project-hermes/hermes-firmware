@@ -168,7 +168,7 @@ void setupCloudIoT()
     setupWifi();
 
     netClient = new WiFiClientSecure();
-    netClient->setInsecure();
+    //netClient->setInsecure();
     //netClient->setCACert(root_cert);
 
     mqttClient = new MQTTClient(7000);

@@ -1,4 +1,5 @@
 #include <Connect.hpp>
+#include <ArduinoJson.h>
 
 void startPortal(SecureDigital sd)
 {
@@ -204,3 +205,5 @@ void ota()
         Serial.println("Error Occurred. Error #: " + String(Update.getError()));
     }
 }
+
+

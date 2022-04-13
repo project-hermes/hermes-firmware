@@ -10,6 +10,14 @@ RTC_DATA_ATTR int staticCount;
 
 void wake()
 {
+
+    Dive d(&sd);
+    // d.sendJson();
+    d.postSecure();
+    while (1)
+    {
+    }
+
     Serial.printf("firmware version:%d\n", FIRMWARE_VERSION);
     pinMode(GPIO_LED2, OUTPUT);
     pinMode(GPIO_LED3, OUTPUT);
@@ -138,7 +146,7 @@ void dynamicDive()
     ms5837 depthSensor = ms5837();
     bool led_on = false;
 
-    if (d.Start(now(), gps.getLat(), gps.getLng(),TIME_DYNAMIC_MODE, staticMode) == "")
+    if (d.Start(now(), gps.getLat(), gps.getLng(), TIME_DYNAMIC_MODE, staticMode) == "")
     {
         Serial.println("error starting the dive");
         pinMode(GPIO_LED1, OUTPUT);
@@ -232,7 +240,7 @@ void startStaticDive()
 
     staticCount = 0;
 
-    if (staticDive.Start(now(), gps.getLat(), gps.getLng(),TIME_TO_SLEEP_STATIC, staticMode) == "")
+    if (staticDive.Start(now(), gps.getLat(), gps.getLng(), TIME_TO_SLEEP_STATIC, staticMode) == "")
     {
         Serial.println("error starting the static dive");
         pinMode(GPIO_LED1, OUTPUT);
