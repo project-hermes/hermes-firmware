@@ -7,17 +7,17 @@ SecureDigital sd;
 RTC_DATA_ATTR Dive staticDive(&sd);
 RTC_DATA_ATTR bool staticMode = false;
 RTC_DATA_ATTR int staticCount;
-
+RTC_DATA_ATTR String staticID;
 void wake()
 {
-
-    Dive d(&sd);
+    /*Test Envoi JSON
+        Dive d(&sd);
     // d.sendJson();
     d.postSecure();
     while (1)
     {
     }
-
+    */
     Serial.printf("firmware version:%d\n", FIRMWARE_VERSION);
     pinMode(GPIO_LED2, OUTPUT);
     pinMode(GPIO_LED3, OUTPUT);
@@ -52,7 +52,11 @@ void wake()
     }
     else
     {
-
+        /*Test static dive
+        startStaticDive();
+        recordStaticDive(); // new static record
+        sleep(true);
+        */
         wakeup_reason = esp_sleep_get_ext1_wakeup_status();
 
         uint64_t mask = 1;
@@ -239,8 +243,8 @@ void startStaticDive()
     ms5837 depthSensor = ms5837();
 
     staticCount = 0;
-
-    if (staticDive.Start(now(), gps.getLat(), gps.getLng(), TIME_TO_SLEEP_STATIC, staticMode) == "")
+    staticID = staticDive.Start(now(), gps.getLat(), gps.getLng(), TIME_TO_SLEEP_STATIC, staticMode);
+    if (staticID == "")
     {
         Serial.println("error starting the static dive");
         pinMode(GPIO_LED1, OUTPUT);

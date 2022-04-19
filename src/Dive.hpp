@@ -18,7 +18,6 @@ struct DiveMetadata
     long startTime;
     long endTime;
     int freq;
-    int numSilos;
     int siloSize;
     float startLat;
     float startLng;
@@ -43,26 +42,24 @@ public:
     void deleteID(String ID);
     void sendJson();
     void postSecure();
+    void setID(String newID);
 
 private:
     Storage *storage;
     String ID;
     DiveMetadata metadata;
-    int order = 0;
     int currentRecords = 0;
     Record *diveRecords;
-    const String recordSchema[2] = {"temp", "depth"};
     const int siloRecordSize = 300;
     const int siloByteSize = 27000;
     const int indexByteSize = 27000;
     const String indexPath = "/index.json";
-
     void init();
-    int writeSilo();
-    int writeMetadataStart(long time, double lat, double lng, int freq, bool mode);
-    int writeMetadataEnd(long time, double lat, double lng);
     int updateIndex();
     String createID(long time);
+    int writeMetadataEnd(long time, double lat, double lng);
+    int writeMetadataStart(long time, double lat, double lng, int freq, bool mode);
+    int writeSilo();
 };
 
 #endif
