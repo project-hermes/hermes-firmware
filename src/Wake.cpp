@@ -277,15 +277,16 @@ void startStaticDive()
 }
 
 void recordStaticDive()
-{
-    tsys01 temperatureSensor = tsys01();
-    ms5837 depthSensor = ms5837();
-    double depth, temp;
-    pinMode(GPIO_SENSOR_POWER, OUTPUT);
+{    pinMode(GPIO_SENSOR_POWER, OUTPUT);
     digitalWrite(GPIO_SENSOR_POWER, LOW);
     delay(10);
     Wire.begin(I2C_SDA, I2C_SCL);
     delay(10);
+
+    tsys01 temperatureSensor = tsys01();
+    ms5837 depthSensor = ms5837();
+    double depth, temp;
+
 
     temp = temperatureSensor.getTemp();
     depth = depthSensor.getDepth();
@@ -296,15 +297,16 @@ void recordStaticDive()
 
 void endStaticDive()
 {
-    GNSS gps = GNSS();
-    tsys01 temperatureSensor = tsys01();
-    ms5837 depthSensor = ms5837();
-    double depth, temp;
-    pinMode(GPIO_SENSOR_POWER, OUTPUT);
+        pinMode(GPIO_SENSOR_POWER, OUTPUT);
     digitalWrite(GPIO_SENSOR_POWER, LOW);
     delay(10);
     Wire.begin(I2C_SDA, I2C_SCL);
     delay(10);
+    GNSS gps = GNSS();
+    tsys01 temperatureSensor = tsys01();
+    ms5837 depthSensor = ms5837();
+    double depth, temp;
+
 
     temp = temperatureSensor.getTemp();
     depth = depthSensor.getDepth();
