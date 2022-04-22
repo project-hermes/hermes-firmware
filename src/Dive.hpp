@@ -12,6 +12,7 @@
 
 using namespace std;
 
+
 struct DiveMetadata
 {
     String ID;
@@ -39,10 +40,12 @@ public:
     String Start(long time, lat lat, lng lng, int freq, bool mode);
     String End(long time, lat lat, lng lng);
     int NewRecord(Record r);
+    int NewRecordStatic(Record r);
+    void saveId(String ID);
     void deleteID(String ID);
     void sendJson();
     void postSecure();
-    void setID(String newID);
+
 
 private:
     Storage *storage;
@@ -57,9 +60,13 @@ private:
     void init();
     int updateIndex();
     String createID(long time);
+        String getID();
+
     int writeMetadataEnd(long time, double lat, double lng);
     int writeMetadataStart(long time, double lat, double lng, int freq, bool mode);
     int writeSilo();
+        int writeStaticRecord();
+
 };
 
 #endif

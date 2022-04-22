@@ -1,6 +1,8 @@
 #include <Dive.hpp>
 #include <Storage/Storage.hpp>
 
+RTC_DATA_ATTR char savedID[100];
+
 Dive::Dive(void) {}
 
 Dive::Dive(Storage *s)
@@ -32,6 +34,8 @@ String Dive::Start(long time, lat lat, lng lng, int freq, bool mode)
     init();
     Serial.println(time);
     ID = createID(time);
+    saveId(ID);
+
     diveRecords = new Record[siloRecordSize];
     if (writeMetadataStart(time, lat, lng, freq, mode) == -1)
     {
@@ -68,11 +72,24 @@ int Dive::NewRecord(Record r)
     return 0;
 }
 
+int Dive::NewRecordStatic(Record r)
+{
+    diveRecords[0] = r;
+
+    if (writeStaticRecord() == -1)
+    {
+        Serial.println("error saving silo");
+        return -1;
+    }
+
+    return 0;
+}
+
 int Dive::writeSilo()
 {
 
     String path = "/" + ID + "/diveRecords.json";
-    
+
     // this should only happen to a new dive record
     if (storage->findFile(path) == -1)
     {
@@ -113,6 +130,56 @@ int Dive::writeSilo()
                 record.add(diveRecords[i].Temp);
                 record.add(diveRecords[i].Depth);
             }
+
+            String buffer;
+            serializeJson(newRecords, buffer);
+
+            return storage->writeFile(path, buffer);
+        }
+    }
+}
+
+int Dive::writeStaticRecord()
+{
+    ID = getID();
+
+    String path = "/" + ID + "/diveRecords.json";
+
+    // this should only happen to a new dive record
+    if (storage->findFile(path) == -1)
+    {
+
+        DynamicJsonDocument jsonSilo(siloByteSize);
+
+        jsonSilo["id"] = ID;
+        JsonArray records = jsonSilo.createNestedArray("records");
+
+        JsonArray record = records.createNestedArray();
+        record.add(diveRecords[0].Temp);
+        record.add(diveRecords[0].Depth);
+
+        String buffer;
+        serializeJson(jsonSilo, buffer);
+
+        return storage->writeFile(path, buffer);
+    }
+    else
+    {
+        String records = storage->readFile(path);
+        if (records == "")
+        {
+            Serial.println("Could not read previous ID records file");
+            return -1;
+        }
+        else
+        {
+
+            DynamicJsonDocument newRecords(siloByteSize);
+            deserializeJson(newRecords, records);
+
+            JsonArray record = newRecords["records"].createNestedArray();
+            record.add(diveRecords[0].Temp);
+            record.add(diveRecords[0].Depth);
 
             String buffer;
             serializeJson(newRecords, buffer);
@@ -209,11 +276,22 @@ int Dive::updateIndex()
     }
 }
 
+void Dive::saveId(String ID)
+{
+    ID.toCharArray(savedID, ID.length() + 1);
+}
+
+String Dive::getID()
+{
+    Serial.print("Saved ID"), Serial.println(savedID);
+    return String(savedID);
+}
+
 String Dive::createID(long time)
 {
     byte shaResult[32];
     WiFi.mode(WIFI_MODE_STA);
-    String unhashed_id = String(time) + WiFi.macAddress();
+    String unhashed_id = String(time) + WiFi.macAddress() + String(esp_random());
     mbedtls_md_context_t ctx;
     mbedtls_md_type_t md_type = MBEDTLS_MD_SHA256;
 
@@ -387,9 +465,4 @@ void Dive::postSecure()
     {
         Serial.println("****** NO WIFI!!");
     }
-}
-
-void Dive::setID(String newID)
-{
-    ID = newID;
 }

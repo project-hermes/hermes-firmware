@@ -7,7 +7,7 @@ SecureDigital sd;
 RTC_DATA_ATTR Dive staticDive(&sd);
 RTC_DATA_ATTR bool staticMode = false;
 RTC_DATA_ATTR int staticCount;
-RTC_DATA_ATTR String staticID;
+
 void wake()
 {
     /*Test Envoi JSON
@@ -52,11 +52,11 @@ void wake()
     }
     else
     {
-        /*Test static dive
+        // Test static dive
         startStaticDive();
-        recordStaticDive(); // new static record
         sleep(true);
-        */
+        /////////////////////////////
+
         wakeup_reason = esp_sleep_get_ext1_wakeup_status();
 
         uint64_t mask = 1;
@@ -243,8 +243,8 @@ void startStaticDive()
     ms5837 depthSensor = ms5837();
 
     staticCount = 0;
-    staticID = staticDive.Start(now(), gps.getLat(), gps.getLng(), TIME_TO_SLEEP_STATIC, staticMode);
-    if (staticID == "")
+    
+    if (staticDive.Start(now(), gps.getLat(), gps.getLng(), TIME_TO_SLEEP_STATIC, staticMode) == "")
     {
         Serial.println("error starting the static dive");
         pinMode(GPIO_LED1, OUTPUT);
@@ -272,35 +272,45 @@ void startStaticDive()
         depth = depthSensor.getDepth();
 
         Record tempRecord = Record{temp, depth};
-        staticDive.NewRecord(tempRecord);
+        staticDive.NewRecordStatic(tempRecord);
     }
 }
 
 void recordStaticDive()
 {
+    tsys01 temperatureSensor = tsys01();
+    ms5837 depthSensor = ms5837();
+    double depth, temp;
     pinMode(GPIO_SENSOR_POWER, OUTPUT);
     digitalWrite(GPIO_SENSOR_POWER, LOW);
     delay(10);
     Wire.begin(I2C_SDA, I2C_SCL);
     delay(10);
 
+    temp = temperatureSensor.getTemp();
+    depth = depthSensor.getDepth();
+
+    Record tempRecord = Record{temp, depth};
+    staticDive.NewRecordStatic(tempRecord);
+}
+
+void endStaticDive()
+{
     GNSS gps = GNSS();
-    sd = SecureDigital();
     tsys01 temperatureSensor = tsys01();
     ms5837 depthSensor = ms5837();
     double depth, temp;
+    pinMode(GPIO_SENSOR_POWER, OUTPUT);
+    digitalWrite(GPIO_SENSOR_POWER, LOW);
+    delay(10);
+    Wire.begin(I2C_SDA, I2C_SCL);
+    delay(10);
 
     temp = temperatureSensor.getTemp();
     depth = depthSensor.getDepth();
 
     Record tempRecord = Record{temp, depth};
-    staticDive.NewRecord(tempRecord);
-}
-
-void endStaticDive()
-{
-
-    GNSS gps = GNSS();
+    staticDive.NewRecordStatic(tempRecord);
     String ID = staticDive.End(now(), gps.getLat(), gps.getLng());
 
     if (ID == "")
