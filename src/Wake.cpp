@@ -52,11 +52,13 @@ void wake()
     }
     else
     {
+        dynamicDive();
+        /*
         // Test static dive
         startStaticDive();
         sleep(true);
         /////////////////////////////
-
+*/
         wakeup_reason = esp_sleep_get_ext1_wakeup_status();
 
         uint64_t mask = 1;
@@ -203,11 +205,11 @@ void dynamicDive()
             delay(TIME_DYNAMIC_MODE);
             if (led_on)
             {
-                digitalWrite(GPIO_LED2, HIGH);
+                digitalWrite(GPIO_LED4, HIGH);
             }
             else
             {
-                digitalWrite(GPIO_LED2, LOW);
+                digitalWrite(GPIO_LED4, LOW);
             }
             led_on = !led_on;
         }
