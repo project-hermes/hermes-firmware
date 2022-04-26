@@ -18,6 +18,7 @@ void wake()
     {
     }
     */
+            
     Serial.printf("firmware version:%d\n", FIRMWARE_VERSION);
     pinMode(GPIO_LED2, OUTPUT);
     pinMode(GPIO_LED3, OUTPUT);
@@ -33,7 +34,7 @@ void wake()
     if (wakeup_reason == ESP_SLEEP_WAKEUP_TIMER)
     {
         pinMode(GPIO_WATER, INPUT);
-        if (digitalRead(GPIO_WATER) == 1)
+        if (analogRead(GPIO_WATER) >= WATER_TRIGGER)
             staticCount = 0; // reset No water counter
         else
             staticCount++;           // if no water counter++
@@ -52,7 +53,8 @@ void wake()
     }
     else
     {
-        dynamicDive();
+        /////////////////TESTS//////////////////
+        //dynamicDive();
         /*
         // Test static dive
         startStaticDive();
@@ -183,7 +185,7 @@ void dynamicDive()
         while (count < maxCounter)
         {
             pinMode(GPIO_WATER, INPUT);
-            if (digitalRead(GPIO_WATER) == 1)
+            if (analogRead(GPIO_WATER) >= WATER_TRIGGER)
                 count = 0; // reset No water counter
             else
                 count++; // if no water counter++
@@ -195,7 +197,7 @@ void dynamicDive()
 
             if (validDive == false) // if dive still not valid, check if depthMin reached
             {
-                if (depth < minDepth)
+                if (depth > minDepth)
                     validDive = true; // if minDepth reached, dive is valid
             }
 

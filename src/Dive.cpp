@@ -56,9 +56,11 @@ String Dive::End(long time, lat lat, lng lng)
 
 int Dive::NewRecord(Record r)
 {
+    Serial.print(currentRecords),Serial.print(":\tTemp = "), Serial.print(r.Temp), Serial.print("\tDepth = "), Serial.println(r.Depth);
+
     diveRecords[currentRecords] = r;
     currentRecords++;
-    if (currentRecords == siloRecordSize)
+    if (currentRecords == siloRecordSize)   
     {
         if (writeSilo() == -1)
         {
@@ -318,7 +320,8 @@ String Dive::createID(long time)
 
 void Dive::deleteID(String ID)
 {
-    storage->removeDirectory("/" + ID);
+    int del = storage->removeDirectory("/" + ID);
+    Serial.print("Delete = "), Serial.println(del);
 }
 
 void Dive::postSecure()
