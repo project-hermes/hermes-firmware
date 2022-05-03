@@ -9,16 +9,7 @@ RTC_DATA_ATTR bool staticMode = false;
 RTC_DATA_ATTR int staticCount;
 
 void wake()
-{
-    /*Test Envoi JSON
-        Dive d(&sd);
-    // d.sendJson();
-    d.postSecure();
-    while (1)
-    {
-    }
-    */
-            
+{           
     Serial.printf("firmware version:%d\n", FIRMWARE_VERSION);
     pinMode(GPIO_LED2, OUTPUT);
     pinMode(GPIO_LED3, OUTPUT);

@@ -44,8 +44,6 @@ public:
     void saveId(String ID);
     void deleteID(String ID);
     void sendJson();
-    void postSecure();
-
 
 private:
     Storage *storage;

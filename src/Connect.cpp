@@ -55,9 +55,6 @@ void startPortal(SecureDigital sd)
 int uploadDives(SecureDigital sd)
 {
 
-    GoogleCloudIOT cloud = GoogleCloudIOT();
-    cloud.connect();
-
     StaticJsonDocument<1024> indexJson;
     sd = SecureDigital();
 
@@ -77,42 +74,12 @@ int uploadDives(SecureDigital sd)
         {
             continue;
         }
-        StaticJsonDocument<512> diveMetadataJson;
-        String diveId = dive["id"];
-        String diveMetadata = sd.readFile(String("/" + diveId + "/metadata.json"));
-        if (diveMetadata == "")
-        {
-            Serial.println("could not load dive metadata for dive " + diveId);
-            return -1;
-        }
+        StaticJsonDocument<512> divedataJson;
+        String ID = dive["id"];
 
-        deserializeJson(diveMetadataJson, diveMetadata);
+        String records = sd.readFile("/" + ID + "/diveRecords.json");
+        post(records);
 
-        int numberOfSilos = diveMetadataJson["numberOfSilos"];
-
-        for (int i = 1; i < numberOfSilos + 1; i++)
-        {
-            String diveSilo = sd.readFile(String("/" + diveId + "/" + "silo_" + i + ".json"));
-            if (diveSilo == "")
-            {
-                Serial.println("could not load dive silo " + String(i) + " for dive " + diveId);
-                return -1;
-            }
-            else
-            {
-                Serial.println("Loaded silo " + String(i) + " of dive " + diveId);
-            }
-
-            if (cloud.upload("Test dive data") == -1)
-            {
-                Serial.println("Could not upload silo " + String(i) + " of dive " + diveId);
-                return -1;
-            }
-            else
-            {
-                Serial.println("Uploaded silo " + String(i) + " of dive " + diveId);
-            }
-        }
         // TODO update the index so the dive does not reuplaod
     }
     return 0;
@@ -206,4 +173,64 @@ void ota()
     }
 }
 
+void connect()
+{
+    const char *ssid = "Freebox-399EFC";
+    const char *password = "dtndkqtx2wqk4cd2qrndkf";
+    WiFi.begin(ssid, password);
+    Serial.println("Connecting");
+    while (WiFi.status() != WL_CONNECTED)
+    {
+        delay(500);
+        Serial.print(".");
+    }
+    Serial.println("");
+    Serial.print("Connected to WiFi network with IP Address: ");
+    Serial.println(WiFi.localIP());
+    Serial.print("ESP Board MAC Address:  ");
+    Serial.println(WiFi.macAddress());
+}
 
+void post(String records)
+{
+
+    // String records = storage->readFile("/" + ID +"/diveRecords.json");
+
+    // String records = storage->readFile("/dive_complet.json");
+
+    if ((WiFi.status() == WL_CONNECTED))
+    {
+
+        HTTPClient http;
+        WiFiClientSecure client;
+        // client.setCACert(test_root_ca);
+        client.setInsecure();
+
+        if (!http.begin(client, "https://project-hermes.azurewebsites.net/api/Remora"))
+        {
+            Serial.println("BEGIN FAILED...");
+        }
+
+        http.addHeader("Content-Type", "application/json");
+        int code = http.POST(records.c_str());
+
+        if (code < 0)
+        {
+            Serial.print("ERROR: ");
+            Serial.println(code);
+        }
+        else
+        {
+            // Read response
+            http.writeToStream(&Serial);
+            Serial.flush();
+        }
+
+        // Disconnect
+        http.end();
+    }
+    else
+    {
+        Serial.println("****** NO WIFI!!");
+    }
+}
