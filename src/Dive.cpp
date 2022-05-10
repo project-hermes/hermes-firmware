@@ -41,6 +41,7 @@ String Dive::Start(long time, lat lat, lng lng, int freq, bool mode)
     {
         return "";
     }
+    createIndex();
     return ID;
 }
 
@@ -56,11 +57,11 @@ String Dive::End(long time, lat lat, lng lng)
 
 int Dive::NewRecord(Record r)
 {
-    Serial.print(currentRecords),Serial.print(":\tTemp = "), Serial.print(r.Temp), Serial.print("\tDepth = "), Serial.println(r.Depth);
+    Serial.print(currentRecords), Serial.print(":\tTemp = "), Serial.print(r.Temp), Serial.print("\tDepth = "), Serial.println(r.Depth);
 
     diveRecords[currentRecords] = r;
     currentRecords++;
-    if (currentRecords == siloRecordSize)   
+    if (currentRecords == siloRecordSize)
     {
         if (writeSilo() == -1)
         {
@@ -95,7 +96,6 @@ int Dive::writeSilo()
     // this should only happen to a new dive record
     if (storage->findFile(path) == -1)
     {
-
         DynamicJsonDocument jsonSilo(siloByteSize);
 
         jsonSilo["id"] = ID;
@@ -235,20 +235,19 @@ int Dive::writeMetadataEnd(long time, double lat, double lng)
     return storage->writeFile(path, buffer);
 }
 
-int Dive::updateIndex()
+int Dive::createIndex()
 {
     // this should only happen to a new device
     if (storage->findFile(indexPath) == -1)
     {
-        // TODO need a log for this
-
         DynamicJsonDocument index(indexByteSize);
 
-        // JsonArray dives = index.to<JsonArray>();
-        // JsonObject dive = dives.createNestedObject();
+        JsonObject dive = index.createNestedObject(ID);
+        dive["uploaded"] = 0;
 
         String buffer;
         serializeJson(index, buffer);
+        Serial.print("BUFFER NEW INDEX = "), Serial.println(buffer);
 
         return storage->writeFile(indexPath, buffer);
     }
@@ -265,13 +264,12 @@ int Dive::updateIndex()
             DynamicJsonDocument newIndex(indexByteSize);
 
             deserializeJson(newIndex, index);
-            JsonArray dives = newIndex.to<JsonArray>();
-            JsonObject dive = dives.createNestedObject();
-            dive["id"] = ID;
-            dive["uploadedAt"] = 0;
+            JsonObject dive = newIndex.createNestedObject(ID);
+            dive["uploaded"] = 0;
 
             String buffer;
             serializeJson(newIndex, buffer);
+            Serial.print("BUFFER INDEX = "), Serial.println(buffer);
 
             return storage->writeFile(indexPath, buffer);
         }

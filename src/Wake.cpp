@@ -9,7 +9,10 @@ RTC_DATA_ATTR bool staticMode = false;
 RTC_DATA_ATTR int staticCount;
 
 void wake()
-{           
+{
+
+ dynamicDive();
+    //startPortal(sd);
     Serial.printf("firmware version:%d\n", FIRMWARE_VERSION);
     pinMode(GPIO_LED2, OUTPUT);
     pinMode(GPIO_LED3, OUTPUT);
@@ -45,13 +48,13 @@ void wake()
     else
     {
         /////////////////TESTS//////////////////
-        //dynamicDive();
-        /*
+        // dynamicDive();
+        
         // Test static dive
         startStaticDive();
         sleep(true);
         /////////////////////////////
-*/
+
         wakeup_reason = esp_sleep_get_ext1_wakeup_status();
 
         uint64_t mask = 1;
@@ -238,7 +241,7 @@ void startStaticDive()
     ms5837 depthSensor = ms5837();
 
     staticCount = 0;
-    
+
     if (staticDive.Start(now(), gps.getLat(), gps.getLng(), TIME_TO_SLEEP_STATIC, staticMode) == "")
     {
         Serial.println("error starting the static dive");
@@ -272,7 +275,8 @@ void startStaticDive()
 }
 
 void recordStaticDive()
-{    pinMode(GPIO_SENSOR_POWER, OUTPUT);
+{
+    pinMode(GPIO_SENSOR_POWER, OUTPUT);
     digitalWrite(GPIO_SENSOR_POWER, LOW);
     delay(10);
     Wire.begin(I2C_SDA, I2C_SCL);
@@ -281,7 +285,6 @@ void recordStaticDive()
     tsys01 temperatureSensor = tsys01();
     ms5837 depthSensor = ms5837();
     double depth, temp;
-
 
     temp = temperatureSensor.getTemp();
     depth = depthSensor.getDepth();
@@ -292,7 +295,7 @@ void recordStaticDive()
 
 void endStaticDive()
 {
-        pinMode(GPIO_SENSOR_POWER, OUTPUT);
+    pinMode(GPIO_SENSOR_POWER, OUTPUT);
     digitalWrite(GPIO_SENSOR_POWER, LOW);
     delay(10);
     Wire.begin(I2C_SDA, I2C_SCL);
@@ -301,7 +304,6 @@ void endStaticDive()
     tsys01 temperatureSensor = tsys01();
     ms5837 depthSensor = ms5837();
     double depth, temp;
-
 
     temp = temperatureSensor.getTemp();
     depth = depthSensor.getDepth();

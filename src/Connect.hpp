@@ -17,9 +17,11 @@ int uploadDives(SecureDigital sd);
 
 void connect();
 
-void post(String records);
+int post(String records);
 
-const static char *test_root_ca PROGMEM =
+const String indexPath = "/index.json";
+
+/*const static char *test_root_ca PROGMEM =
     "-----BEGIN CERTIFICATE-----\n"
     "MIIIujCCBqKgAwIBAgITMwAxS6DhmVCLBf6MWwAAADFLoDANBgkqhkiG9w0BAQwF\n"
     "ADBZMQswCQYDVQQGEwJVUzEeMBwGA1UEChMVTWljcm9zb2Z0IENvcnBvcmF0aW9u\n"
@@ -103,5 +105,6 @@ const static char *test_root_ca PROGMEM =
     "Y59Npi7F87ZqYYJEHJM2LGD+le8VsHjgeWX2CJQko7klXvcizuZvUEDTjHaQcs2J\n"
     "+kPgfyMIOY1DMJ21NxOJ2xPRC/wAh/hzSBRVtoAnyuxtkZ4VjIOh\n"
     "-----END CERTIFICATE-----\n";
+*/
 
 #endif

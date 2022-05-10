@@ -1,5 +1,6 @@
 #include <Connect.hpp>
 #include <ArduinoJson.h>
+#include <Dive.hpp>
 
 void startPortal(SecureDigital sd)
 {
@@ -28,8 +29,7 @@ void startPortal(SecureDigital sd)
 
     Serial.println("Wifi connected, start upload dives");
     uploadDives(sd);
-    // Serial.println("disconnecting");
-    // cloud.disconnect();
+
     return;
 
     // turned off for testing
@@ -43,8 +43,9 @@ void startPortal(SecureDigital sd)
                 return;
             }
         }
-        ota();
-        sendJson();
+        Serial.println(WiFi.localIP());
+        Serial.println("Wifi connected, start upload dives");
+        uploadDives(sd);
     }
     while (digitalRead(GPIO_VCC_SENSE) == 1)
     {
@@ -54,35 +55,51 @@ void startPortal(SecureDigital sd)
 
 int uploadDives(SecureDigital sd)
 {
-
     StaticJsonDocument<1024> indexJson;
     sd = SecureDigital();
 
     String data;
-    data = sd.readFile("/index.json");
+    data = sd.readFile(indexPath);
     if (data == "")
     {
         Serial.println("Could not read index file to upload dives");
         return -1;
     }
     deserializeJson(indexJson, data);
-    log_v("\nNb dives recorded = %d\n");
+    Serial.print("NB DIVES RECORDED = "), Serial.println(indexJson.size());
     for (int i = 0; i < indexJson.size(); i++)
     {
-        JsonObject dive = indexJson[i].as<JsonObject>();
-        if (dive["uploadedAt"] != 0)
+       Serial.println("OK1");
+        //JsonObject dive = indexJson[i].as<JsonObject>();
+
+        JsonObject dive = indexJson[i];
+               Serial.println("OK2");
+
+        if (dive["uploaded"] != 0)
         {
             continue;
         }
+               Serial.println("OK3");
+
         StaticJsonDocument<512> divedataJson;
         String ID = dive["id"];
 
         String records = sd.readFile("/" + ID + "/diveRecords.json");
-        post(records);
-
-        // TODO update the index so the dive does not reuplaod
+        int count = 0;
+        while (post(records) != 200 && count < 3)
+        {
+            count++;
+            delay(200);
+        }
+        if(count <3)
+        {
+          dive["uploaded"] = 1;  
+        }
     }
-    return 0;
+        String buffer;
+        serializeJson(indexJson, buffer);
+
+        return sd.writeFile(indexPath, buffer);
 }
 
 void ota()
@@ -191,13 +208,8 @@ void connect()
     Serial.println(WiFi.macAddress());
 }
 
-void post(String records)
+int post(String records)
 {
-
-    // String records = storage->readFile("/" + ID +"/diveRecords.json");
-
-    // String records = storage->readFile("/dive_complet.json");
-
     if ((WiFi.status() == WL_CONNECTED))
     {
 
@@ -214,23 +226,17 @@ void post(String records)
         http.addHeader("Content-Type", "application/json");
         int code = http.POST(records.c_str());
 
-        if (code < 0)
-        {
-            Serial.print("ERROR: ");
-            Serial.println(code);
-        }
-        else
-        {
-            // Read response
-            http.writeToStream(&Serial);
-            Serial.flush();
-        }
+        Serial.flush();
 
         // Disconnect
         http.end();
+
+        return code;
     }
     else
     {
         Serial.println("****** NO WIFI!!");
+        return -1;
     }
+    return -2;
 }

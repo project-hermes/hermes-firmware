@@ -9,6 +9,7 @@
 #include <Storage/Storage.hpp>
 #include <Types.hpp>
 #include <Utils.hpp>
+#include <Connect.hpp>
 
 using namespace std;
 
@@ -54,9 +55,9 @@ private:
     const int siloRecordSize = 300;
     const int siloByteSize = 27000;
     const int indexByteSize = 27000;
-    const String indexPath = "/index.json";
+    //const String indexPath = "/index.json";
     void init();
-    int updateIndex();
+    int createIndex();
     String createID(long time);
         String getID();
 
