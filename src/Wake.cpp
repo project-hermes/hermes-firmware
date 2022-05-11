@@ -10,8 +10,6 @@ RTC_DATA_ATTR int staticCount;
 
 void wake()
 {
-
- dynamicDive();
     //startPortal(sd);
     Serial.printf("firmware version:%d\n", FIRMWARE_VERSION);
     pinMode(GPIO_LED2, OUTPUT);
@@ -166,15 +164,6 @@ void dynamicDive()
         bool validDive = false;
         int count = 0;
         double depth, temp;
-        /* Test water sensor */
-        /*         while (1)
-                {
-                    pinMode(GPIO_WATER, INPUT);
-
-                    Serial.print("Water = "), Serial.println(digitalRead(GPIO_WATER));
-                    delay(500);
-                } */
-        /* End Test water sensor */
 
         while (count < maxCounter)
         {

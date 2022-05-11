@@ -276,6 +276,55 @@ int Dive::createIndex()
     }
 }
 
+int Dive::updateIndex(String updatedID)
+{
+
+    String index = storage->readFile(indexPath);
+    if (index == "")
+    {
+        Serial.println("Could not read index file");
+        return -1;
+    }
+    else
+    {
+        DynamicJsonDocument newIndex(indexByteSize);
+
+        deserializeJson(newIndex, index);
+        JsonObject dive = newIndex.createNestedObject(updatedID);
+        dive["uploaded"] = 1;
+
+        String buffer;
+        serializeJson(newIndex, buffer);
+        Serial.print("BUFFER INDEX = "), Serial.println(buffer);
+
+        return storage->writeFile(indexPath, buffer);
+    }
+}
+
+int Dive::deleteIndex(String deletedID)
+{
+
+    String index = storage->readFile(indexPath);
+    if (index == "")
+    {
+        Serial.println("Could not read index file");
+        return -1;
+    }
+    else
+    {
+        DynamicJsonDocument newIndex(indexByteSize);
+
+        deserializeJson(newIndex, index);
+        newIndex.remove(deletedID);
+
+        String buffer;
+        serializeJson(newIndex, buffer);
+        Serial.print("BUFFER INDEX = "), Serial.println(buffer);
+
+        return storage->writeFile(indexPath, buffer);
+    }
+}
+
 void Dive::saveId(String ID)
 {
     ID.toCharArray(savedID, ID.length() + 1);
@@ -318,6 +367,9 @@ String Dive::createID(long time)
 
 void Dive::deleteID(String ID)
 {
-    int del = storage->removeDirectory("/" + ID);
-    Serial.print("Delete = "), Serial.println(del);
+    String pathRecords = "/" + ID + "/diveRecords.json";
+    int del = storage->deleteFile(pathRecords);
+    String path = "/" + ID;
+    del = storage->removeDirectory(path);
+    deleteIndex(ID);
 }

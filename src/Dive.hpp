@@ -13,7 +13,6 @@
 
 using namespace std;
 
-
 struct DiveMetadata
 {
     String ID;
@@ -38,12 +37,16 @@ class Dive
 public:
     Dive();
     Dive(Storage *s);
+
     String Start(long time, lat lat, lng lng, int freq, bool mode);
     String End(long time, lat lat, lng lng);
+
     int NewRecord(Record r);
     int NewRecordStatic(Record r);
+
     void saveId(String ID);
     void deleteID(String ID);
+    
     void sendJson();
 
 private:
@@ -55,17 +58,20 @@ private:
     const int siloRecordSize = 300;
     const int siloByteSize = 27000;
     const int indexByteSize = 27000;
-    //const String indexPath = "/index.json";
+
     void init();
+
     int createIndex();
+    int updateIndex(String updatedID);
+    int deleteIndex(String deletedID);
+
     String createID(long time);
-        String getID();
+    String getID();
 
     int writeMetadataEnd(long time, double lat, double lng);
     int writeMetadataStart(long time, double lat, double lng, int freq, bool mode);
     int writeSilo();
-        int writeStaticRecord();
-
+    int writeStaticRecord();
 };
 
 #endif
