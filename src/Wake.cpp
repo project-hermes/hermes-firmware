@@ -10,7 +10,7 @@ RTC_DATA_ATTR int staticCount;
 
 void wake()
 {
-    //startPortal(sd);
+
     Serial.printf("firmware version:%d\n", FIRMWARE_VERSION);
     pinMode(GPIO_LED2, OUTPUT);
     pinMode(GPIO_LED3, OUTPUT);
@@ -47,10 +47,10 @@ void wake()
     {
         /////////////////TESTS//////////////////
         // dynamicDive();
-        
+
         // Test static dive
-        startStaticDive();
-        sleep(true);
+        // startStaticDive();
+        // sleep(true);
         /////////////////////////////
 
         wakeup_reason = esp_sleep_get_ext1_wakeup_status();
@@ -123,7 +123,7 @@ void sleep(bool timer)
     }
     else // if other mode, wake up with water, config, or charging
     {
-        uint64_t wakeMask = 1ULL << GPIO_WATER | 1ULL << GPIO_CONFIG /*| 1ULL << GPIO_VCC_SENSE*/;
+        uint64_t wakeMask = 1ULL << GPIO_WATER | 1ULL << GPIO_CONFIG | 1ULL << GPIO_VCC_SENSE;
         esp_sleep_enable_ext1_wakeup(wakeMask, ESP_EXT1_WAKEUP_ANY_HIGH);
     }
 

@@ -269,7 +269,6 @@ int Dive::createIndex()
 
             String buffer;
             serializeJson(newIndex, buffer);
-            Serial.print("BUFFER INDEX = "), Serial.println(buffer);
 
             return storage->writeFile(indexPath, buffer);
         }
@@ -295,7 +294,6 @@ int Dive::updateIndex(String updatedID)
 
         String buffer;
         serializeJson(newIndex, buffer);
-        Serial.print("BUFFER INDEX = "), Serial.println(buffer);
 
         return storage->writeFile(indexPath, buffer);
     }
@@ -319,7 +317,6 @@ int Dive::deleteIndex(String deletedID)
 
         String buffer;
         serializeJson(newIndex, buffer);
-        Serial.print("BUFFER INDEX = "), Serial.println(buffer);
 
         return storage->writeFile(indexPath, buffer);
     }

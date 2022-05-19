@@ -9,11 +9,19 @@
 #include <Navigation/GNSS.hpp>
 #include <Utils.hpp>
 
+#define SUCCESS 0
+#define OLD_FIRMWARE_ERROR -1 
+#define FIRMWARE_SIZE_ERROR -2
+#define GET_FIRMWARE_ERROR -3
+#define CONNECTION_ERROR -4
+#define HTTP_BEGIN_ERROR -5
+
+
 void startPortal(SecureDigital sd);
 
-void ota();
-
 int uploadDives(SecureDigital sd);
+
+int ota();
 
 void connect();
 

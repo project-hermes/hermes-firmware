@@ -2,57 +2,6 @@
 #include <ArduinoJson.h>
 #include <Dive.hpp>
 
-void startPortal(SecureDigital sd)
-{
-    WebServer Server;
-    AutoConnect Portal(Server);
-
-    Serial.printf("starting config portal...\n");
-    AutoConnectConfig acConfig("Remora Config", "cousteau");
-    acConfig.hostName = "remora";
-    acConfig.homeUri = "/remora";
-    acConfig.autoReconnect = true;
-    acConfig.autoReset = false;
-    acConfig.portalTimeout = 15 * 60 * 1000;
-    acConfig.title = "Remora Config";
-    acConfig.ticker = true;
-    acConfig.tickerPort = GPIO_LED3;
-    acConfig.tickerOn = LOW;
-    Portal.config(acConfig);
-    Portal.begin();
-
-    while (WiFi.status() == WL_DISCONNECTED)
-    {
-        Portal.handleClient();
-    }
-    Serial.println(WiFi.localIP());
-
-    Serial.println("Wifi connected, start upload dives");
-    uploadDives(sd);
-
-    return;
-
-    // turned off for testing
-    /*if (digitalRead(GPIO_VCC_SENSE) == 1)
-    {
-        while (WiFi.status() == WL_DISCONNECTED)
-        {
-            Portal.handleClient();
-            if (digitalRead(GPIO_VCC_SENSE) == 0)
-            {
-                return;
-            }
-        }
-        Serial.println(WiFi.localIP());
-        Serial.println("Wifi connected, start upload dives");
-        uploadDives(sd);
-    }
-    while (digitalRead(GPIO_VCC_SENSE) == 1)
-    {
-        Portal.handleClient();
-    }*/
-}
-
 int uploadDives(SecureDigital sd)
 {
     StaticJsonDocument<1024> indexJson;
@@ -69,17 +18,16 @@ int uploadDives(SecureDigital sd)
     Serial.print("NB DIVES RECORDED = "), Serial.println(indexJson.size());
     for (int i = 0; i < indexJson.size(); i++)
     {
-       Serial.println("OK1");
-        //JsonObject dive = indexJson[i].as<JsonObject>();
+        // JsonObject dive = indexJson[i].as<JsonObject>();
 
         JsonObject dive = indexJson[i];
-               Serial.println("OK2");
-
+        String buffer;
+        serializeJson(dive, buffer);
+        Serial.print("CurrentDive = "), Serial.println(buffer);
         if (dive["uploaded"] != 0)
         {
             continue;
         }
-               Serial.println("OK3");
 
         StaticJsonDocument<512> divedataJson;
         String ID = dive["id"];
@@ -91,103 +39,15 @@ int uploadDives(SecureDigital sd)
             count++;
             delay(200);
         }
-        if(count <3)
+        if (count < 3)
         {
-          dive["uploaded"] = 1;  
+            dive["uploaded"] = 1;
         }
     }
-        String buffer;
-        serializeJson(indexJson, buffer);
+    String buffer;
+    serializeJson(indexJson, buffer);
 
-        return sd.writeFile(indexPath, buffer);
-}
-
-void ota()
-{
-    String cloudFunction = "http://us-central1-project-hermes-staging.cloudfunctions.net/ota";
-    String bucketURL = "http://storage.googleapis.com/remora-firmware/";
-    String version;
-    HTTPClient http;
-
-    Serial.println(WiFi.localIP());
-
-    if (http.begin(cloudFunction))
-    {
-        if (http.GET() == 200)
-        {
-            version = http.getString();
-            if (version.toInt() <= FIRMWARE_VERSION)
-            {
-                http.end();
-                Serial.printf("Will not update as I am version:%ld and you are offering version:%d\n", version.toInt(), FIRMWARE_VERSION);
-                return;
-            }
-        }
-        else
-        {
-            Serial.println("could not contact cloud function");
-            http.end();
-            return;
-        }
-    }
-    else
-    {
-        Serial.println("could not begin http client");
-    }
-    http.end();
-
-    size_t written = 0;
-    size_t gotten = 1;
-    String firmware_url = bucketURL + "firmware_" + FIRMWARE_VERSION + ".bin";
-    if (http.begin(firmware_url))
-    {
-        if (http.GET() == 200)
-        {
-            gotten = http.getSize();
-            if (!Update.begin(gotten))
-            {
-                Serial.printf("Firmware file too big at %d\n", gotten);
-                http.end();
-                return;
-            }
-            Serial.println("atempting to update...");
-            written = Update.writeStream(http.getStream());
-        }
-        http.end();
-    }
-    else
-    {
-        Serial.println("could not get update file");
-        http.end();
-        return;
-    }
-
-    if (written == gotten)
-    {
-        Serial.println("Written : " + String(written) + " successfully");
-    }
-    else
-    {
-        Serial.println("Written only : " + String(written) + "/" + String(gotten) + ". Retry?");
-    }
-
-    if (Update.end())
-    {
-        Serial.println("OTA done!");
-        if (Update.isFinished())
-        {
-            Serial.println("Update successfully completed. Rebooting.");
-            ESP.restart();
-        }
-        else
-        {
-            Serial.println("Update not finished? Something went wrong!");
-        }
-    }
-    else
-    {
-        Serial.println("Error Occurred. Error #: " + String(Update.getError()));
-    }
+    return sd.writeFile(indexPath, buffer);
 }
 
 void connect()
@@ -239,4 +99,156 @@ int post(String records)
         return -1;
     }
     return -2;
+}
+
+void startPortal(SecureDigital sd)
+{
+    WebServer Server;
+    AutoConnect Portal(Server);
+
+    Serial.printf("starting config portal...\n");
+    AutoConnectConfig acConfig("Remora Config", "cousteau");
+    acConfig.hostName = "remora";
+    acConfig.homeUri = "/remora";
+    acConfig.autoReconnect = true;
+    acConfig.autoReset = false;
+    acConfig.portalTimeout = 15 * 60 * 1000;
+    acConfig.title = "Remora Config";
+    acConfig.ticker = true;
+    acConfig.tickerPort = GPIO_LED3;
+    acConfig.tickerOn = LOW;
+    Portal.config(acConfig);
+    Portal.begin();
+    bool error = false;
+
+    while (WiFi.status() == WL_DISCONNECTED)
+    {
+        Portal.handleClient();
+    }
+    Serial.println(WiFi.localIP());
+
+    log_d("Wifi connected, start upload dives");
+
+    if (uploadDives(sd)!= SUCCESS)
+        error = true;
+
+    log_d("Upload finished, start OTA");
+    if (ota() != SUCCESS)
+        error = true;
+
+    pinMode(GPIO_LED1, OUTPUT);
+    digitalWrite(GPIO_LED1, error);
+    pinMode(GPIO_LED2, OUTPUT);
+    digitalWrite(GPIO_LED2, !error);
+    log_d("OTA finished, waiting for usb disconnection");
+    pinMode(GPIO_VCC_SENSE, INPUT);
+    while (WiFi.status() == WL_CONNECTED && digitalRead(GPIO_VCC_SENSE))
+    {
+        delay(100);
+    }
+
+    log_d("USB disconnected, go back to sleep");
+    sleep(false);
+}
+
+int ota()
+{
+    String cloudFunction = "https://project-hermes.azurewebsites.net/api/Firmware";
+    String firmwareName;
+    HTTPClient http;
+    String firmwareURL;
+    Serial.println(WiFi.localIP());
+
+    if (http.begin(cloudFunction))
+    {
+        if (http.GET() == 200)
+        {
+            firmwareName = http.getString();
+
+            StaticJsonDocument<1024> firmwareJson;
+            deserializeJson(firmwareJson, firmwareName);
+            const char *name = firmwareJson["name"];
+            String version = name;
+            const char *url = firmwareJson["url"];
+            firmwareURL = url;
+
+            version.remove(0, 10);
+
+            Serial.print("Firmware = "), Serial.println(version.toFloat());
+
+            if (version.toFloat() <= FIRMWARE_VERSION)
+            {
+                http.end();
+                Serial.printf("Will not update as I am version:%1.2f and you are offering version:%1.2f\n", version.toFloat(), FIRMWARE_VERSION);
+                return OLD_FIRMWARE_ERROR;
+            }
+            else
+            {
+                // Start update
+                size_t written = 0;
+                size_t gotten = 1;
+                if (http.begin(firmwareURL))
+                {
+                    if (http.GET() == 200)
+                    {
+                        gotten = http.getSize();
+                        if (!Update.begin(gotten))
+                        {
+                            Serial.printf("Firmware file too big at %d\n", gotten);
+                            http.end();
+                            return FIRMWARE_SIZE_ERROR;
+                        }
+                        Serial.println("atempting to update...");
+                        written = Update.writeStream(http.getStream());
+                    }
+                    http.end();
+                }
+                else
+                {
+                    Serial.println("could not get update file");
+                    http.end();
+                    return GET_FIRMWARE_ERROR;
+                }
+
+                if (written == gotten)
+                {
+                    Serial.println("Written : " + String(written) + " successfully");
+                }
+                else
+                {
+                    Serial.println("Written only : " + String(written) + "/" + String(gotten) + ". Retry?");
+                }
+
+                if (Update.end())
+                {
+                    Serial.println("OTA done!");
+                    if (Update.isFinished())
+                    {
+                        Serial.println("Update successfully completed. Rebooting.");
+                    }
+                    else
+                    {
+                        Serial.println("Update not finished? Something went wrong!");
+                    }
+                }
+                else
+                {
+                    Serial.println("Error Occurred. Error #: " + String(Update.getError()));
+                }
+            }
+        }
+        else
+        {
+            Serial.println("could not contact cloud function");
+            http.end();
+            return CONNECTION_ERROR;
+        }
+    }
+    else
+    {
+        Serial.println("could not begin http client");
+        return HTTP_BEGIN_ERROR;
+    }
+    http.end();
+    return SUCCESS;
 }
