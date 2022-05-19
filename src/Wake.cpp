@@ -11,7 +11,7 @@ RTC_DATA_ATTR int staticCount;
 void wake()
 {
 
-    Serial.printf("firmware version:%d\n", FIRMWARE_VERSION);
+    Serial.printf("firmware version:%1.2f\n", FIRMWARE_VERSION);
     pinMode(GPIO_LED2, OUTPUT);
     pinMode(GPIO_LED3, OUTPUT);
     pinMode(GPIO_LED4, OUTPUT);
@@ -51,9 +51,9 @@ void wake()
         // Test static dive
         // startStaticDive();
         // sleep(true);
-        /////////////////////////////
-
-        wakeup_reason = esp_sleep_get_ext1_wakeup_status();
+        ///////////////////////////// 
+        
+           wakeup_reason = esp_sleep_get_ext1_wakeup_status();
 
         uint64_t mask = 1;
         int i = 0;

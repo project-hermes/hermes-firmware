@@ -15,7 +15,7 @@ void Dive::init()
 
     ID = "";
     currentRecords = 0;
-    Record *diveRecords;
+    Record *diveRecords = {0};
     metadata.ID = "";
     metadata.startTime = 0;
     metadata.endTime = 0;
@@ -241,6 +241,7 @@ int Dive::createIndex()
     if (storage->findFile(indexPath) == -1)
     {
         DynamicJsonDocument index(indexByteSize);
+        // index[ID] = 0;
 
         JsonObject dive = index.createNestedObject(ID);
         dive["uploaded"] = 0;
@@ -365,8 +366,8 @@ String Dive::createID(long time)
 void Dive::deleteID(String ID)
 {
     String pathRecords = "/" + ID + "/diveRecords.json";
-    int del = storage->deleteFile(pathRecords);
+    storage->deleteFile(pathRecords);
     String path = "/" + ID;
-    del = storage->removeDirectory(path);
+    storage->removeDirectory(path);
     deleteIndex(ID);
 }

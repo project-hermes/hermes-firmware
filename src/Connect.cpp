@@ -15,22 +15,19 @@ int uploadDives(SecureDigital sd)
         return -1;
     }
     deserializeJson(indexJson, data);
-    Serial.print("NB DIVES RECORDED = "), Serial.println(indexJson.size());
-    for (int i = 0; i < indexJson.size(); i++)
+    JsonObject root = indexJson.as<JsonObject>();
+    for (JsonObject::iterator it = root.begin(); it != root.end(); ++it)
     {
-        // JsonObject dive = indexJson[i].as<JsonObject>();
+        String ID = it->key().c_str();
+        Serial.println(ID);
 
-        JsonObject dive = indexJson[i];
-        String buffer;
-        serializeJson(dive, buffer);
-        Serial.print("CurrentDive = "), Serial.println(buffer);
-        if (dive["uploaded"] != 0)
+        JsonObject dive = indexJson[ID].as<JsonObject>();
+        const int uploaded = dive["uploaded"];
+        Serial.println(uploaded);
+        if (uploaded != 0)
         {
             continue;
         }
-
-        StaticJsonDocument<512> divedataJson;
-        String ID = dive["id"];
 
         String records = sd.readFile("/" + ID + "/diveRecords.json");
         int count = 0;
@@ -44,6 +41,7 @@ int uploadDives(SecureDigital sd)
             dive["uploaded"] = 1;
         }
     }
+
     String buffer;
     serializeJson(indexJson, buffer);
 
@@ -70,6 +68,7 @@ void connect()
 
 int post(String records)
 {
+    Serial.println(records);
     if ((WiFi.status() == WL_CONNECTED))
     {
 
@@ -85,6 +84,7 @@ int post(String records)
 
         http.addHeader("Content-Type", "application/json");
         int code = http.POST(records.c_str());
+        Serial.print("HTTP RETURN = "), Serial.println(code);
 
         Serial.flush();
 
@@ -129,7 +129,7 @@ void startPortal(SecureDigital sd)
 
     log_d("Wifi connected, start upload dives");
 
-    if (uploadDives(sd)!= SUCCESS)
+    if (uploadDives(sd) != SUCCESS)
         error = true;
 
     log_d("Upload finished, start OTA");
