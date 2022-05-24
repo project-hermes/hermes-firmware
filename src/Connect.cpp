@@ -30,6 +30,7 @@ int uploadDives(SecureDigital sd)
         }
 
         String records = sd.readFile("/" + ID + "/diveRecords.json");
+        Serial.print("RECORDS = "), Serial.println(records);
         int count = 0;
         while (post(records) != 200 && count < 3)
         {
@@ -108,8 +109,8 @@ void startPortal(SecureDigital sd)
 
     Serial.printf("starting config portal...\n");
     AutoConnectConfig acConfig("Remora Config", "cousteau");
-    acConfig.hostName = "remora";
-    acConfig.homeUri = "/remora";
+    // acConfig.hostName = String("remora");
+    // acConfig.homeUri = "https://www.google.fr";
     acConfig.autoReconnect = true;
     acConfig.autoReset = false;
     acConfig.portalTimeout = 15 * 60 * 1000;
@@ -127,6 +128,9 @@ void startPortal(SecureDigital sd)
     }
     Serial.println(WiFi.localIP());
 
+    pinMode(GPIO_LED1, OUTPUT);
+    digitalWrite(GPIO_LED2, HIGH);
+
     log_d("Wifi connected, start upload dives");
 
     if (uploadDives(sd) != SUCCESS)
@@ -138,13 +142,13 @@ void startPortal(SecureDigital sd)
 
     pinMode(GPIO_LED1, OUTPUT);
     digitalWrite(GPIO_LED1, error);
-    pinMode(GPIO_LED2, OUTPUT);
-    digitalWrite(GPIO_LED2, !error);
+    digitalWrite(GPIO_LED2, LOW);
     log_d("OTA finished, waiting for usb disconnection");
+
     pinMode(GPIO_VCC_SENSE, INPUT);
     while (WiFi.status() == WL_CONNECTED && digitalRead(GPIO_VCC_SENSE))
     {
-        delay(100);
+        Portal.handleClient();
     }
 
     log_d("USB disconnected, go back to sleep");
