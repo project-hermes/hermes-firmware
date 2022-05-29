@@ -55,9 +55,10 @@ private:
     DiveMetadata metadata;
     int currentRecords = 0;
     Record *diveRecords;
-    const int siloRecordSize = 300;
+    const int siloRecordSize = 5;
     const int siloByteSize = 27000;
     const int indexByteSize = 27000;
+    int order = 0;
 
     void init();
 

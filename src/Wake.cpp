@@ -51,9 +51,9 @@ void wake()
         // Test static dive
         // startStaticDive();
         // sleep(true);
-        ///////////////////////////// 
-        
-           wakeup_reason = esp_sleep_get_ext1_wakeup_status();
+        /////////////////////////////
+
+        wakeup_reason = esp_sleep_get_ext1_wakeup_status();
 
         uint64_t mask = 1;
         int i = 0;
@@ -123,7 +123,7 @@ void sleep(bool timer)
     }
     else // if other mode, wake up with water, config, or charging
     {
-        uint64_t wakeMask = 1ULL << GPIO_WATER | 1ULL << GPIO_CONFIG | 1ULL << GPIO_VCC_SENSE;
+        uint64_t wakeMask = 1ULL << GPIO_WATER | 1ULL << GPIO_CONFIG /*| 1ULL << GPIO_VCC_SENSE*/;
         esp_sleep_enable_ext1_wakeup(wakeMask, ESP_EXT1_WAKEUP_ANY_HIGH);
     }
 
@@ -144,6 +144,7 @@ void dynamicDive()
     Dive d(&sd);
     tsys01 temperatureSensor = tsys01();
     ms5837 depthSensor = ms5837();
+
     bool led_on = false;
 
     if (d.Start(now(), gps.getLat(), gps.getLng(), TIME_DYNAMIC_MODE, staticMode) == "")

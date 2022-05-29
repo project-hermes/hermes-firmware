@@ -2,6 +2,8 @@
 #include <Storage/Storage.hpp>
 
 RTC_DATA_ATTR char savedID[100];
+RTC_DATA_ATTR int currentRecords;
+RTC_DATA_ATTR int order;
 
 Dive::Dive(void) {}
 
@@ -15,7 +17,9 @@ void Dive::init()
 
     ID = "";
     currentRecords = 0;
-    Record *diveRecords = {0};
+    delete[] diveRecords;
+    diveRecords = new Record[siloRecordSize];
+    order = 0;
     metadata.ID = "";
     metadata.startTime = 0;
     metadata.endTime = 0;
@@ -25,8 +29,8 @@ void Dive::init()
     metadata.startLng = 0;
     metadata.endLat = 0;
     metadata.endLng = 0;
-    diveRecords->Temp = 0;
-    diveRecords->Depth = 0;
+    // diveRecords->Temp = 0;
+    // diveRecords->Depth = 0;
 }
 
 String Dive::Start(long time, lat lat, lng lng, int freq, bool mode)
@@ -57,7 +61,7 @@ String Dive::End(long time, lat lat, lng lng)
 
 int Dive::NewRecord(Record r)
 {
-    Serial.print(currentRecords), Serial.print(":\tTemp = "), Serial.print(r.Temp), Serial.print("\tDepth = "), Serial.println(r.Depth);
+    // Serial.print(currentRecords), Serial.print(":\tTemp = "), Serial.print(r.Temp), Serial.print("\tDepth = "), Serial.println(r.Depth);
 
     diveRecords[currentRecords] = r;
     currentRecords++;
@@ -91,79 +95,58 @@ int Dive::NewRecordStatic(Record r)
 int Dive::writeSilo()
 {
 
-    String path = "/" + ID + "/diveRecords.json";
+    String path = "/" + ID + "/silo" + String(order) + ".json";
 
-    // this should only happen to a new dive record
-    if (storage->findFile(path) == -1)
+    DynamicJsonDocument jsonSilo(siloByteSize);
+
+    jsonSilo["id"] = ID;
+    jsonSilo["order"] = order;
+    order++;
+
+    JsonArray records = jsonSilo.createNestedArray("records");
+    for (int i = 0; i < siloRecordSize; i++)
     {
-        DynamicJsonDocument jsonSilo(siloByteSize);
-
-        jsonSilo["id"] = ID;
-        JsonArray records = jsonSilo.createNestedArray("records");
-        for (int i = 0; i < siloRecordSize; i++)
-        {
-            JsonArray record = records.createNestedArray();
-            record.add(diveRecords[i].Temp);
-            record.add(diveRecords[i].Depth);
-        }
-
-        String buffer;
-        serializeJson(jsonSilo, buffer);
-
-        return storage->writeFile(path, buffer);
+        JsonArray record = records.createNestedArray();
+        record.add(String(diveRecords[i].Temp, 3));
+        record.add(String(diveRecords[i].Depth, 3));
     }
-    else
-    {
-        String records = storage->readFile(path);
-        if (records == "")
-        {
-            Serial.println("Could not read previous ID records file");
-            return -1;
-        }
-        else
-        {
 
-            DynamicJsonDocument newRecords(siloByteSize);
-            deserializeJson(newRecords, records);
+    String buffer;
+    serializeJson(jsonSilo, buffer);
 
-            for (int i = 0; i < siloRecordSize; i++)
-            {
-                JsonArray record = newRecords["records"].createNestedArray();
-                record.add(diveRecords[i].Temp);
-                record.add(diveRecords[i].Depth);
-            }
-
-            String buffer;
-            serializeJson(newRecords, buffer);
-
-            return storage->writeFile(path, buffer);
-        }
-    }
+    return storage->writeFile(path, buffer);
 }
 
 int Dive::writeStaticRecord()
 {
     ID = getID();
 
-    String path = "/" + ID + "/diveRecords.json";
+    String path = "/" + ID + "/silo" + String(order) + ".json";
+
+    Serial.print("Current Records = "), Serial.println(currentRecords);
+    Serial.print("Order = "), Serial.println(order);
+
+    currentRecords++;
+    //Change silo number if enough records
+    if (currentRecords == siloRecordSize) 
+    {
+        order++;
+        delete[] diveRecords;
+        diveRecords = new Record[siloRecordSize];
+        currentRecords = 0;
+    }
+
+    DynamicJsonDocument jsonSilo(siloByteSize);
 
     // this should only happen to a new dive record
     if (storage->findFile(path) == -1)
     {
-
-        DynamicJsonDocument jsonSilo(siloByteSize);
-
         jsonSilo["id"] = ID;
         JsonArray records = jsonSilo.createNestedArray("records");
 
         JsonArray record = records.createNestedArray();
         record.add(diveRecords[0].Temp);
         record.add(diveRecords[0].Depth);
-
-        String buffer;
-        serializeJson(jsonSilo, buffer);
-
-        return storage->writeFile(path, buffer);
     }
     else
     {
@@ -175,27 +158,25 @@ int Dive::writeStaticRecord()
         }
         else
         {
+            deserializeJson(jsonSilo, records);
 
-            DynamicJsonDocument newRecords(siloByteSize);
-            deserializeJson(newRecords, records);
-
-            JsonArray record = newRecords["records"].createNestedArray();
+            JsonArray record = jsonSilo["records"].createNestedArray();
             record.add(diveRecords[0].Temp);
             record.add(diveRecords[0].Depth);
-
-            String buffer;
-            serializeJson(newRecords, buffer);
-
-            return storage->writeFile(path, buffer);
         }
     }
+
+    String buffer;
+    serializeJson(jsonSilo, buffer);
+
+    return storage->writeFile(path, buffer);
 }
 
 int Dive::writeMetadataStart(long time, double lat, double lng, int freq, bool mode)
 {
     StaticJsonDocument<1024> mdata;
     storage->makeDirectory("/" + ID);
-    String path = "/" + ID + "/diveRecords.json";
+    String path = "/" + ID + "/metadata.json";
 
     mdata["deviceId"] = remoraID();
     mdata["diveId"] = ID;
@@ -204,23 +185,23 @@ int Dive::writeMetadataStart(long time, double lat, double lng, int freq, bool m
     mdata["startLat"] = lat;
     mdata["startLng"] = lng;
     mdata["freq"] = freq;
-    mdata.createNestedArray("records");
 
     String buffer;
     serializeJson(mdata, buffer);
+    log_d("Start metadatajson file");
     return storage->writeFile(path, buffer);
 }
 
 int Dive::writeMetadataEnd(long time, double lat, double lng)
 {
     StaticJsonDocument<1024> mdata;
-    String path = "/" + ID + "/diveRecords.json";
+    String path = "/" + ID + "/metadata.json";
 
     String data;
     data = storage->readFile(path);
     if (data == "")
     {
-        Serial.println("Failed to read meatadata to save dive!");
+        Serial.println("Failed to read metadata to save dive!");
         return -1;
     }
 
@@ -229,6 +210,7 @@ int Dive::writeMetadataEnd(long time, double lat, double lng)
     mdata["endTime"] = time;
     mdata["endLat"] = lat;
     mdata["endLng"] = lng;
+    mdata["numberOfSilos"] = order;
 
     String buffer;
     serializeJson(mdata, buffer);
