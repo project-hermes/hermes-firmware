@@ -30,6 +30,7 @@ struct Record
 {
     temperature Temp;
     depth Depth;
+    long Time;
 };
 
 class Dive

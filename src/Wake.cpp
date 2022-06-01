@@ -7,6 +7,7 @@ SecureDigital sd;
 RTC_DATA_ATTR Dive staticDive(&sd);
 RTC_DATA_ATTR bool staticMode = false;
 RTC_DATA_ATTR int staticCount;
+RTC_DATA_ATTR long staticTime;
 
 void wake()
 {
@@ -45,14 +46,7 @@ void wake()
     }
     else
     {
-        /////////////////TESTS//////////////////
-        // dynamicDive();
-
-        // Test static dive
-        // startStaticDive();
-        // sleep(true);
-        /////////////////////////////
-
+  
         wakeup_reason = esp_sleep_get_ext1_wakeup_status();
 
         uint64_t mask = 1;
@@ -165,6 +159,7 @@ void dynamicDive()
         bool validDive = false;
         int count = 0;
         double depth, temp;
+        long time;
 
         while (count < maxCounter)
         {
@@ -178,6 +173,7 @@ void dynamicDive()
 
             temp = temperatureSensor.getTemp();
             depth = depthSensor.getDepth();
+            time = esp_timer_get_time() / 1000000; // get time in seconds since wake up
 
             if (validDive == false) // if dive still not valid, check if depthMin reached
             {
@@ -185,7 +181,7 @@ void dynamicDive()
                     validDive = true; // if minDepth reached, dive is valid
             }
 
-            Record tempRecord = Record{temp, depth};
+            Record tempRecord = Record{temp, depth, time};
             d.NewRecord(tempRecord);
 
             delay(TIME_DYNAMIC_MODE);
@@ -255,11 +251,12 @@ void startStaticDive()
             delay(300);
         }
         double depth, temp;
+        staticTime = 0;
 
         temp = temperatureSensor.getTemp();
         depth = depthSensor.getDepth();
 
-        Record tempRecord = Record{temp, depth};
+        Record tempRecord = Record{temp, depth, staticTime};
         staticDive.NewRecordStatic(tempRecord);
     }
 }
@@ -278,8 +275,9 @@ void recordStaticDive()
 
     temp = temperatureSensor.getTemp();
     depth = depthSensor.getDepth();
+    staticTime += TIME_TO_SLEEP_STATIC;
 
-    Record tempRecord = Record{temp, depth};
+    Record tempRecord = Record{temp, depth, staticTime};
     staticDive.NewRecordStatic(tempRecord);
 }
 
@@ -297,8 +295,9 @@ void endStaticDive()
 
     temp = temperatureSensor.getTemp();
     depth = depthSensor.getDepth();
+    staticTime += TIME_TO_SLEEP_STATIC;
 
-    Record tempRecord = Record{temp, depth};
+    Record tempRecord = Record{temp, depth, staticTime};
     staticDive.NewRecordStatic(tempRecord);
     String ID = staticDive.End(now(), gps.getLat(), gps.getLng());
 

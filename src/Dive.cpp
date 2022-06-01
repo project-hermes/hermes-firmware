@@ -2,8 +2,8 @@
 #include <Storage/Storage.hpp>
 
 RTC_DATA_ATTR char savedID[100];
-RTC_DATA_ATTR int currentRecords;
-RTC_DATA_ATTR int order;
+RTC_DATA_ATTR int staticCurrentRecords;
+RTC_DATA_ATTR int staticOrder;
 
 Dive::Dive(void) {}
 
@@ -29,8 +29,8 @@ void Dive::init()
     metadata.startLng = 0;
     metadata.endLat = 0;
     metadata.endLng = 0;
-    // diveRecords->Temp = 0;
-    // diveRecords->Depth = 0;
+    staticCurrentRecords = 0;
+    staticOrder = 0;
 }
 
 String Dive::Start(long time, lat lat, lng lng, int freq, bool mode)
@@ -61,7 +61,7 @@ String Dive::End(long time, lat lat, lng lng)
 
 int Dive::NewRecord(Record r)
 {
-    // Serial.print(currentRecords), Serial.print(":\tTemp = "), Serial.print(r.Temp), Serial.print("\tDepth = "), Serial.println(r.Depth);
+    Serial.print(currentRecords), Serial.print(":\tTime = "), Serial.print(r.Time), Serial.print(":\tTemp = "), Serial.print(r.Temp), Serial.print("\tDepth = "), Serial.println(r.Depth);
 
     diveRecords[currentRecords] = r;
     currentRecords++;
@@ -100,15 +100,15 @@ int Dive::writeSilo()
     DynamicJsonDocument jsonSilo(siloByteSize);
 
     jsonSilo["id"] = ID;
-    jsonSilo["order"] = order;
     order++;
 
     JsonArray records = jsonSilo.createNestedArray("records");
     for (int i = 0; i < siloRecordSize; i++)
     {
         JsonArray record = records.createNestedArray();
-        record.add(String(diveRecords[i].Temp, 3));
-        record.add(String(diveRecords[i].Depth, 3));
+        record.add(diveRecords[i].Temp);
+        record.add(diveRecords[i].Depth);
+        record.add(diveRecords[i].Time);
     }
 
     String buffer;
@@ -121,19 +121,17 @@ int Dive::writeStaticRecord()
 {
     ID = getID();
 
-    String path = "/" + ID + "/silo" + String(order) + ".json";
+    String path = "/" + ID + "/silo" + String(staticOrder) + ".json";
 
-    Serial.print("Current Records = "), Serial.println(currentRecords);
-    Serial.print("Order = "), Serial.println(order);
+    Serial.print("Current Records = "), Serial.println(staticCurrentRecords);
+    Serial.print("Order = "), Serial.println(staticOrder);
 
-    currentRecords++;
-    //Change silo number if enough records
-    if (currentRecords == siloRecordSize) 
+    staticCurrentRecords++;
+    // Change silo number if enough records
+    if (staticCurrentRecords == siloRecordSize)
     {
-        order++;
-        delete[] diveRecords;
-        diveRecords = new Record[siloRecordSize];
-        currentRecords = 0;
+        staticOrder++;
+        staticCurrentRecords = 0;
     }
 
     DynamicJsonDocument jsonSilo(siloByteSize);
@@ -147,6 +145,7 @@ int Dive::writeStaticRecord()
         JsonArray record = records.createNestedArray();
         record.add(diveRecords[0].Temp);
         record.add(diveRecords[0].Depth);
+        record.add(diveRecords[0].Time);
     }
     else
     {
@@ -163,6 +162,7 @@ int Dive::writeStaticRecord()
             JsonArray record = jsonSilo["records"].createNestedArray();
             record.add(diveRecords[0].Temp);
             record.add(diveRecords[0].Depth);
+            record.add(diveRecords[0].Time);
         }
     }
 
@@ -312,7 +312,7 @@ void Dive::saveId(String ID)
 
 String Dive::getID()
 {
-    Serial.print("Saved ID"), Serial.println(savedID);
+        Serial.print("Saved ID : "), Serial.println(savedID);
     return String(savedID);
 }
 
