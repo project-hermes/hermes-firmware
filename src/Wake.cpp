@@ -159,7 +159,7 @@ void dynamicDive()
         bool validDive = false;
         int count = 0;
         double depth, temp;
-        long time;
+        long time = 0;
 
         while (count < maxCounter)
         {
@@ -173,7 +173,7 @@ void dynamicDive()
 
             temp = temperatureSensor.getTemp();
             depth = depthSensor.getDepth();
-            time = esp_timer_get_time() / 1000000; // get time in seconds since wake up
+            time = (TIME_DYNAMIC_MODE / 1000); // get time in seconds since wake up
 
             if (validDive == false) // if dive still not valid, check if depthMin reached
             {

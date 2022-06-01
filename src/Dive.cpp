@@ -210,7 +210,6 @@ int Dive::writeMetadataEnd(long time, double lat, double lng)
     mdata["endTime"] = time;
     mdata["endLat"] = lat;
     mdata["endLng"] = lng;
-    mdata["numberOfSilos"] = order;
 
     String buffer;
     serializeJson(mdata, buffer);
