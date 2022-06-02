@@ -17,7 +17,6 @@ void Dive::init()
 
     ID = "";
     currentRecords = 0;
-    delete[] diveRecords;
     diveRecords = new Record[siloRecordSize];
     order = 0;
     metadata.ID = "";
@@ -61,7 +60,7 @@ String Dive::End(long time, lat lat, lng lng)
 
 int Dive::NewRecord(Record r)
 {
-    Serial.print(currentRecords), Serial.print(":\tTime = "), Serial.print(r.Time), Serial.print(":\tTemp = "), Serial.print(r.Temp), Serial.print("\tDepth = "), Serial.println(r.Depth);
+    log_d("%d :\tTime=%d\tTemp=%2.3f\t Depth=%2.3f", currentRecords, r.Time, r.Temp, r.Depth);
 
     diveRecords[currentRecords] = r;
     currentRecords++;
@@ -72,7 +71,7 @@ int Dive::NewRecord(Record r)
             Serial.println("error saving silo");
             return -1;
         }
-        delete[] diveRecords;
+        // delete[] diveRecords;
         diveRecords = new Record[siloRecordSize];
         currentRecords = 0;
     }
@@ -99,7 +98,8 @@ int Dive::writeSilo()
 
     DynamicJsonDocument jsonSilo(siloByteSize);
 
-    jsonSilo["id"] = ID;
+    jsonSilo["diveId"] = ID;
+    jsonSilo["remoraId"] = remoraID();
     order++;
 
     JsonArray records = jsonSilo.createNestedArray("records");
@@ -139,7 +139,9 @@ int Dive::writeStaticRecord()
     // this should only happen to a new dive record
     if (storage->findFile(path) == -1)
     {
-        jsonSilo["id"] = ID;
+        jsonSilo["diveId"] = ID;
+        jsonSilo["remoraId"] = remoraID();
+
         JsonArray records = jsonSilo.createNestedArray("records");
 
         JsonArray record = records.createNestedArray();
@@ -311,7 +313,7 @@ void Dive::saveId(String ID)
 
 String Dive::getID()
 {
-        Serial.print("Saved ID : "), Serial.println(savedID);
+    Serial.print("Saved ID : "), Serial.println(savedID);
     return String(savedID);
 }
 
@@ -346,9 +348,18 @@ String Dive::createID(long time)
 
 void Dive::deleteID(String ID)
 {
-    String pathRecords = "/" + ID + "/diveRecords.json";
-    storage->deleteFile(pathRecords);
+    int i = 0;
+    String pathRecords;
+    do
+    {
+        pathRecords = "/" + ID + "/silo" + i + ".json";
+        i++;
+    } while (storage->deleteFile(pathRecords) == 0); // delete silo files
+
+    pathRecords = "/" + ID + "/metadata.json";
+    storage->deleteFile(pathRecords); // delete metadata file
+
     String path = "/" + ID;
-    storage->removeDirectory(path);
+    storage->removeDirectory(path); // remove directory
     deleteIndex(ID);
 }

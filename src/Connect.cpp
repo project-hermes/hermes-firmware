@@ -4,6 +4,7 @@
 
 int uploadDives(SecureDigital sd)
 {
+    bool error = false;
     StaticJsonDocument<1024> indexJson;
     sd = SecureDigital();
 
@@ -29,18 +30,30 @@ int uploadDives(SecureDigital sd)
             continue;
         }
 
-        String records = sd.readFile("/" + ID + "/diveRecords.json");
-        Serial.print("RECORDS = "), Serial.println(records);
-        int count = 0;
-        while (post(records) != 200 && count < 3)
+        String metadata = sd.readFile("/" + ID + "/metadata.json");
+        log_d("RECORDS = %s ", metadata);
+        if (post(metadata, true) != 200) // post metadata
+            error = true;
+        else
+            log_d("Metadata posted");
+
+        int i = 0;
+        String path = "/" + ID + "/silo0.json";
+
+        String records = "";
+        while (sd.findFile(path) == 0)
         {
-            count++;
-            delay(200);
+            String records = sd.readFile(path);
+            if (post(records) != 200) // post silos
+                error = true;
+            else
+                log_d("Silo %d posted", i);
+            i++;
+            path = "/" + ID + "/silo" + i + ".json";
         }
-        if (count < 3)
-        {
+
+        if (!error)
             dive["uploaded"] = 1;
-        }
     }
 
     String buffer;
@@ -49,27 +62,10 @@ int uploadDives(SecureDigital sd)
     return sd.writeFile(indexPath, buffer);
 }
 
-void connect()
+int post(String data, bool metadata)
 {
-    const char *ssid = "Freebox-399EFC";
-    const char *password = "dtndkqtx2wqk4cd2qrndkf";
-    WiFi.begin(ssid, password);
-    Serial.println("Connecting");
-    while (WiFi.status() != WL_CONNECTED)
-    {
-        delay(500);
-        Serial.print(".");
-    }
-    Serial.println("");
-    Serial.print("Connected to WiFi network with IP Address: ");
-    Serial.println(WiFi.localIP());
-    Serial.print("ESP Board MAC Address:  ");
-    Serial.println(WiFi.macAddress());
-}
 
-int post(String records)
-{
-    Serial.println(records);
+    Serial.println(data);
     if ((WiFi.status() == WL_CONNECTED))
     {
 
@@ -78,16 +74,14 @@ int post(String records)
         // client.setCACert(test_root_ca);
         client.setInsecure();
 
-        if (!http.begin(client, "https://project-hermes.azurewebsites.net/api/Remora"))
+        if (!http.begin(client, metadata ? metadataURL : recordURL))
         {
-            Serial.println("BEGIN FAILED...");
+            log_d("BEGIN FAILED...");
         }
 
         http.addHeader("Content-Type", "application/json");
-        int code = http.POST(records.c_str());
-        Serial.print("HTTP RETURN = "), Serial.println(code);
-
-        Serial.flush();
+        int code = http.POST(data.c_str());
+        log_d("HTTP RETURN = %d", code);
 
         // Disconnect
         http.end();

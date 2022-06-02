@@ -117,7 +117,7 @@ void sleep(bool timer)
     }
     else // if other mode, wake up with water, config, or charging
     {
-        uint64_t wakeMask = 1ULL << GPIO_WATER | 1ULL << GPIO_CONFIG /*| 1ULL << GPIO_VCC_SENSE*/;
+        uint64_t wakeMask = 1ULL << GPIO_WATER | 1ULL << GPIO_CONFIG | 1ULL << GPIO_VCC_SENSE;
         esp_sleep_enable_ext1_wakeup(wakeMask, ESP_EXT1_WAKEUP_ANY_HIGH);
     }
 
@@ -164,6 +164,7 @@ void dynamicDive()
         while (count < maxCounter)
         {
             pinMode(GPIO_WATER, INPUT);
+            log_d("Valeur capteur eau = %d", analogRead(GPIO_WATER));
             if (analogRead(GPIO_WATER) >= WATER_TRIGGER)
                 count = 0; // reset No water counter
             else
@@ -173,7 +174,7 @@ void dynamicDive()
 
             temp = temperatureSensor.getTemp();
             depth = depthSensor.getDepth();
-            time = (TIME_DYNAMIC_MODE / 1000); // get time in seconds since wake up
+            time += (TIME_DYNAMIC_MODE / 1000); // get time in seconds since wake up
 
             if (validDive == false) // if dive still not valid, check if depthMin reached
             {

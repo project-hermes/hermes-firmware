@@ -23,11 +23,11 @@ int uploadDives(SecureDigital sd);
 
 int ota();
 
-void connect();
-
-int post(String records);
+int post(String records, bool metadata = 0);
 
 const String indexPath = "/index.json";
+const String metadataURL = "https://project-hermes.azurewebsites.net/api/Remora";
+const String recordURL = "https://project-hermes.azurewebsites.net/api/RemoraRecord";
 
 /*const static char *test_root_ca PROGMEM =
     "-----BEGIN CERTIFICATE-----\n"
