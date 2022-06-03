@@ -99,7 +99,6 @@ int Dive::writeSilo()
     DynamicJsonDocument jsonSilo(siloByteSize);
 
     jsonSilo["diveId"] = ID;
-    jsonSilo["remoraId"] = remoraID();
     order++;
 
     JsonArray records = jsonSilo.createNestedArray("records");
@@ -140,7 +139,6 @@ int Dive::writeStaticRecord()
     if (storage->findFile(path) == -1)
     {
         jsonSilo["diveId"] = ID;
-        jsonSilo["remoraId"] = remoraID();
 
         JsonArray records = jsonSilo.createNestedArray("records");
 

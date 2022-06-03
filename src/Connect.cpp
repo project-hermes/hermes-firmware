@@ -40,17 +40,17 @@ int uploadDives(SecureDigital sd)
         int i = 0;
         String path = "/" + ID + "/silo0.json";
 
-        String records = "";
-        while (sd.findFile(path) == 0)
-        {
-            String records = sd.readFile(path);
-            if (post(records) != 200) // post silos
-                error = true;
-            else
-                log_d("Silo %d posted", i);
-            i++;
-            path = "/" + ID + "/silo" + i + ".json";
-        }
+ String records = "";
+         while (sd.findFile(path) == 0)
+         {
+             String records = sd.readFile(path);
+             if (post(records) != 200) // post silos
+                 error = true;
+             else
+                 log_d("Silo %d posted", i);
+             i++;
+             path = "/" + ID + "/silo" + i + ".json";
+         }
 
         if (!error)
             dive["uploaded"] = 1;
