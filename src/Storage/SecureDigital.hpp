@@ -17,36 +17,36 @@ public:
         delay(10);
         if (!SD.begin(5))
         {
-            Serial.println("Card Mount Failed");
+            log_e("Card Mount Failed");
             return;
         }
         uint8_t cardType = SD.cardType();
 
         if (cardType == CARD_NONE)
         {
-            Serial.println("No SD card attached");
+            log_e("No SD card attached");
             return;
         }
 
-        Serial.print("SD Card Type: ");
+        log_v("SD Card Type: ");
         if (cardType == CARD_MMC)
         {
-            Serial.println("MMC");
+            log_v("MMC");
         }
         else if (cardType == CARD_SD)
         {
-            Serial.println("SDSC");
+            log_v("SDSC");
         }
         else if (cardType == CARD_SDHC)
         {
-            Serial.println("SDHC");
+            log_v("SDHC");
         }
         else
         {
-            Serial.println("UNKNOWN");
+            log_v("UNKNOWN");
         }
         uint64_t cardSize = SD.cardSize() / (1024 * 1024);
-        Serial.printf("SD Card Size: %lluMB\n", cardSize);
+        log_d("SD Card Size: %lluMB\n", cardSize);
     };
 
     int makeDirectory(String path)
