@@ -1,6 +1,11 @@
 #include <WiFi.h>
 #include <mbedtls/md.h>
 
+#include <Storage/SecureDigital.hpp>
+#include <ArduinoJson.h>
+
+#include <Arduino.h>
+
 #include <Utils.hpp>
 
 String remoraID()
@@ -31,3 +36,4 @@ String remoraID()
 
     return hash;
 }
+

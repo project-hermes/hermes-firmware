@@ -8,7 +8,7 @@ void setup()
     delay(1000);
 
     wake();
-    sleep();
+    sleep(false);
 }
 
 void loop()

@@ -25,9 +25,9 @@ ms5837::ms5837()
 
         Wire.requestFrom(_addr, 2);
         _msCalibrationValue[i] = (Wire.read() << 8) | Wire.read();
-#ifdef DEBUG
-        Serial.printf("calibration value %d: %d\n", i, _msCalibrationValue[i]);
-#endif
+
+        log_d("calibration value %d: %d\n", i, _msCalibrationValue[i]);
+
     }
 
     // Verify that data is correct with CRC
@@ -35,8 +35,8 @@ ms5837::ms5837()
     uint8_t crcCalculated = crc4(_msCalibrationValue);
     if (crcCalculated != crcRead)
     {
-        Serial.printf("CRC does not match!!!\n");
-        Serial.printf("Got %u but expected %u\n", crcCalculated, crcRead);
+        log_e("CRC does not match!!!");
+        log_d("Got %u but expected %u\n", crcCalculated, crcRead);
     }
 }
 
@@ -111,9 +111,9 @@ void ms5837::readValues()
     _rawTemp = Wire.read();
     _rawTemp = (_rawTemp << 8) | Wire.read();
     _rawTemp = (_rawTemp << 8) | Wire.read();
-#ifdef DEBUG
-    Serial.printf("rawTemp: %u rawPressure: %u\n", _rawTemp, _rawPres);
-#endif
+
+    log_d("rawTemp: %u rawPressure: %u\n", _rawTemp, _rawPres);
+
 }
 
 void ms5837::computeTemp()
