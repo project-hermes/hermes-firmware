@@ -43,10 +43,21 @@ int uploadDives(SecureDigital sd)
         while (sd.findFile(path) == 0)
         {
             String records = sd.readFile(path);
-            if (post(records) != 200) // post silos
-                error = true;
+            log_d("SILO = %s", records.c_str());
+            if (records != "")
+            {
+                if (post(records) != 200) // post silos
+                {
+                    error = true;
+                    log_e("Silo %d not posted", i);
+                }
+                else
+                    log_i("Silo %d posted", i);
+            }
             else
-                log_i("Silo %d posted", i);
+            {
+                log_i("Silo %d empty, skipped", i);
+            }
             i++;
             path = "/" + ID + "/silo" + i + ".json";
         }
@@ -76,7 +87,11 @@ int post(String data, bool metadata)
         {
             log_e("BEGIN FAILED...");
         }
+        // Specify Authorization-type header
+        // String recv_token = "eyJ0eXAiOiJK..."; // Complete Bearer token
+        // recv_token = "Bearer " + recv_token;	// Adding "Bearer " before token
 
+        // http.addHeader("Authorization", recv_token); // Adding Bearer token as HTTP header
         http.addHeader("Content-Type", "application/json");
         int code = http.POST(data.c_str());
         log_i("HTTP RETURN = %d", code);
