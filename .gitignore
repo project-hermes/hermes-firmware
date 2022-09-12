@@ -31,3 +31,4 @@
 
 # End of https://www.gitignore.io/api/platformio,visualstudiocode
 .vscode/extensions.json
+secret.hpp
