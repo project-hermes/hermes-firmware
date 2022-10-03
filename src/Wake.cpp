@@ -17,6 +17,7 @@ void wake()
     pinMode(GPIO_LED3, OUTPUT);
     pinMode(GPIO_LED4, OUTPUT);
     pinMode(GPIO_WATER, INPUT);
+    pinMode(GPIO_PROBE, INPUT);
     pinMode(GPIO_VBATT, INPUT);
     digitalWrite(GPIO_LED3, LOW);
     digitalWrite(GPIO_LED4, LOW);
@@ -25,12 +26,13 @@ void wake()
 
     if (wakeup_reason == ESP_SLEEP_WAKEUP_TIMER)
     {
-        pinMode(GPIO_WATER, INPUT);
+        pinMode(GPIO_PROBE, INPUT);
         if (analogRead(GPIO_WATER) >= WATER_TRIGGER)
             staticCount = 0; // reset No water counter
         else
             staticCount++;           // if no water counter++
-        pinMode(GPIO_WATER, OUTPUT); // set gpio water pin as output to avoid corrosion
+        pinMode(GPIO_PROBE, OUTPUT); // set gpio probe pin as low output to avoid corrosion
+        digitalWrite(GPIO_PROBE, LOW);
 
         if (staticCount < maxStaticCounter)
         {
@@ -108,6 +110,11 @@ void sleep(bool timer)
 
     if (timer) // if static diving, wake up with timer or config button
     {
+        pinMode(GPIO_PROBE, OUTPUT); // set gpio probe pin as low output to avoid corrosion
+        digitalWrite(GPIO_PROBE, LOW);
+        gpio_hold_en(GPIO_PROBE);
+        gpio_deep_sleep_hold_en();
+        
         uint64_t wakeMask = 1ULL << GPIO_CONFIG;
         esp_sleep_enable_ext1_wakeup(wakeMask, ESP_EXT1_WAKEUP_ANY_HIGH);
         esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP_STATIC * uS_TO_S_FACTOR);
@@ -159,14 +166,15 @@ void dynamicDive()
 
         while (count < maxCounter)
         {
-            pinMode(GPIO_WATER, INPUT);
+            pinMode(GPIO_PROBE, INPUT);
             if (analogRead(GPIO_WATER) >= WATER_TRIGGER)
                 count = 0; // reset No water counter
             else
                 count++; // if no water counter++
 
-            pinMode(GPIO_WATER, OUTPUT); // set gpio water pin as output to avoid corrosion
-
+            pinMode(GPIO_PROBE, OUTPUT); // set gpio probe pin as low output to avoid corrosion
+            digitalWrite(GPIO_PROBE, LOW);
+            
             temp = temperatureSensor.getTemp();
             depth = depthSensor.getDepth();
             time += (TIME_DYNAMIC_MODE / 1000); // get time in seconds since wake up
