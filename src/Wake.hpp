@@ -15,7 +15,7 @@
 #include <Connect.hpp>
 //#include <Network/GoogleCloudIOT.hpp>
 
-#define FIRMWARE_VERSION 2.1
+#define FIRMWARE_VERSION 2.2
 
 #define uS_TO_S_FACTOR 1000000 /* Conversion factor for micro seconds to seconds */
 #define TIME_TO_SLEEP_STATIC 5 /* Time ESP32 will go to sleep (in seconds) between each static record */

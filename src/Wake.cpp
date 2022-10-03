@@ -1,5 +1,7 @@
 #include <Wake.hpp>
 
+#define MODE_DEBUG 1
+
 using namespace std;
 SecureDigital sd;
 
@@ -47,7 +49,7 @@ void wake()
     }
     else
     {
-  
+
         wakeup_reason = esp_sleep_get_ext1_wakeup_status();
 
         uint64_t mask = 1;
@@ -112,16 +114,20 @@ void sleep(bool timer)
     {
         pinMode(GPIO_PROBE, OUTPUT); // set gpio probe pin as low output to avoid corrosion
         digitalWrite(GPIO_PROBE, LOW);
-        gpio_hold_en(GPIO_PROBE);
+        gpio_hold_en(GPIO_NUM_33);
         gpio_deep_sleep_hold_en();
-        
+
         uint64_t wakeMask = 1ULL << GPIO_CONFIG;
         esp_sleep_enable_ext1_wakeup(wakeMask, ESP_EXT1_WAKEUP_ANY_HIGH);
         esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP_STATIC * uS_TO_S_FACTOR);
     }
     else // if other mode, wake up with water, config, or charging
     {
+#ifndef MODE_DEBUG
         uint64_t wakeMask = 1ULL << GPIO_WATER | 1ULL << GPIO_CONFIG | 1ULL << GPIO_VCC_SENSE;
+#else
+        uint64_t wakeMask = 1ULL << GPIO_WATER | 1ULL << GPIO_CONFIG;
+#endif
         esp_sleep_enable_ext1_wakeup(wakeMask, ESP_EXT1_WAKEUP_ANY_HIGH);
     }
 
@@ -174,7 +180,7 @@ void dynamicDive()
 
             pinMode(GPIO_PROBE, OUTPUT); // set gpio probe pin as low output to avoid corrosion
             digitalWrite(GPIO_PROBE, LOW);
-            
+
             temp = temperatureSensor.getTemp();
             depth = depthSensor.getDepth();
             time += (TIME_DYNAMIC_MODE / 1000); // get time in seconds since wake up
