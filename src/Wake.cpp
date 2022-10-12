@@ -12,9 +12,10 @@ RTC_DATA_ATTR int staticCount;
 RTC_DATA_ATTR long staticTime;
 
 /// @brief Interrupt routine to shutdown remora if wifi is disconnected
-/// @return 
-void IRAM_ATTR ISR() {
-sleep(false);
+/// @return
+void IRAM_ATTR ISR()
+{
+    sleep(false);
 }
 
 void wake()
@@ -67,7 +68,7 @@ void wake()
                 {
                     log_d("Wake up gpio vcc sense");
 
-                    //While wifi not set, shutdown if usb is disconnected
+                    // While wifi not set, shutdown if usb is disconnected
                     attachInterrupt(GPIO_VCC_SENSE, ISR, FALLING);
 
                     startPortal(sd);
@@ -98,7 +99,7 @@ void sleep(bool timer)
 
         uint64_t wakeMask = 1ULL << GPIO_CONFIG;
         esp_sleep_enable_ext1_wakeup(wakeMask, ESP_EXT1_WAKEUP_ANY_HIGH);
-        esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP_STATIC * uS_TO_S_FACTOR);
+        esp_sleep_enable_timer_wakeup((TIME_TO_SLEEP_STATIC *1000 - OFFSET_SLEEP_STATIC) * 1000);
     }
     else // if other mode, wake up with water, config, or charging
     {
@@ -152,44 +153,49 @@ void dynamicDive()
         int count = 0;
         double depth, temp;
         long time = 0;
+        unsigned long startTime = millis(), previous = millis();
 
         while (count < MAX_DYNAMIC_COUNTER)
         {
-            temp = temperatureSensor.getTemp();
-            depth = depthSensor.getDepth();
-            time += (TIME_DYNAMIC_MODE / 1000); // get time in seconds since wake up
-
-            if (validDive == false) // if dive still not valid, check if depthMin reached
+            if (millis() - previous > TIME_DYNAMIC_MODE)
             {
-                if (depth > MIN_DEPTH_VALID_DIVE)
-                    validDive = true; // if minDepth reached, dive is valid
-            }
+                previous = millis();
+                time = (millis() - startTime) / 1000; // get time in seconds since wake up
 
-            if (depth < MAX_DEPTH_CHECK_WATER)
-            {
-                pinMode(GPIO_PROBE, INPUT); // enable probe pin to allow water detection
-                int value = analogRead(GPIO_WATER);
-                log_d("Value = %d", value);
-                if (value >= WATER_TRIGGER)
-                    count = 0; // reset No water counter
+                temp = temperatureSensor.getTemp();
+                depth = depthSensor.getDepth();
+
+                if (validDive == false) // if dive still not valid, check if depthMin reached
+                {
+                    if (depth > MIN_DEPTH_VALID_DIVE)
+                        validDive = true; // if minDepth reached, dive is valid
+                }
+
+                if (depth < MAX_DEPTH_CHECK_WATER)
+                {
+                    pinMode(GPIO_PROBE, INPUT); // enable probe pin to allow water detection
+                    int value = analogRead(GPIO_WATER);
+                    log_d("Value = %d", value);
+                    if (value >= WATER_TRIGGER)
+                        count = 0; // reset No water counter
+                    else
+                        count++;                 // if no water counter++
+                    pinMode(GPIO_PROBE, OUTPUT); // set gpio probe pin as low output to avoid corrosion
+                    digitalWrite(GPIO_PROBE, LOW);
+                }
+                Record tempRecord = Record{temp, depth, time};
+                d.NewRecord(tempRecord);
+
+                if (led_on)
+                {
+                    digitalWrite(GPIO_LED4, HIGH);
+                }
                 else
-                    count++;                 // if no water counter++
-                pinMode(GPIO_PROBE, OUTPUT); // set gpio probe pin as low output to avoid corrosion
-                digitalWrite(GPIO_PROBE, LOW);
+                {
+                    digitalWrite(GPIO_LED4, LOW);
+                }
+                led_on = !led_on;
             }
-            Record tempRecord = Record{temp, depth, time};
-            d.NewRecord(tempRecord);
-
-            delay(TIME_DYNAMIC_MODE);
-            if (led_on)
-            {
-                digitalWrite(GPIO_LED4, HIGH);
-            }
-            else
-            {
-                digitalWrite(GPIO_LED4, LOW);
-            }
-            led_on = !led_on;
         }
 
         String ID = d.End(now(), gps.getLat(), gps.getLng(), staticMode);

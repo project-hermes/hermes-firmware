@@ -1,10 +1,11 @@
 #ifndef SETTINGS_HPP
 #define SETTINGS_HPP
 
-#define FIRMWARE_VERSION 2.4
+#define FIRMWARE_VERSION 2.6
 
 // Dives parameters
 #define uS_TO_S_FACTOR 1000000    /* Conversion factor for micro seconds to seconds */
+#define OFFSET_SLEEP_STATIC 1750    /*Offset going to sleep and wake up static mode*/
 #define TIME_TO_SLEEP_STATIC 5    /* Time ESP32 will go to sleep (in seconds) between each static record */
 #define TIME_DYNAMIC_MODE 1000    /* Time between two records in dynamic mode (ms)*/
 #define MIN_DEPTH_VALID_DIVE -9999/* Min depth to validate dynamic dive (meters)*/

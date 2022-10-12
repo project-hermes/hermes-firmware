@@ -46,7 +46,7 @@ int uploadDives(SecureDigital sd)
             log_d("SILO = %s", records.c_str());
             if (records != "")
             {
-                if (post(records) != 200) // post silos
+                if (post(records,false) != 200) // post silos
                 {
                     error = true;
                     log_e("Silo %d not posted", i);
