@@ -46,7 +46,7 @@ int uploadDives(SecureDigital sd)
             log_d("SILO = %s", records.c_str());
             if (records != "")
             {
-                if (post(records,false) != 200) // post silos
+                if (post(records, false) != 200) // post silos
                 {
                     error = true;
                     log_e("Silo %d not posted", i);
@@ -134,7 +134,6 @@ void startPortal(SecureDigital sd)
         Portal.handleClient();
     }
     log_i("Adresse IP : %s", WiFi.localIP().toString().c_str());
-    
 
     // detach interrupt to keep remora alive during upload and ota process even if usb is disconnected
     detachInterrupt(GPIO_VCC_SENSE);
@@ -148,7 +147,7 @@ void startPortal(SecureDigital sd)
         error = true;
 
     log_v("Upload finished, start OTA");
-    if (ota() != SUCCESS)
+    if (ota(sd) != SUCCESS)
         error = true;
 
     pinMode(GPIO_LED1, OUTPUT);
@@ -165,8 +164,10 @@ void startPortal(SecureDigital sd)
     sleep(false);
 }
 
-int ota()
+int ota(SecureDigital sd)
 {
+    sd = SecureDigital();
+
     String firmwareName;
     HTTPClient http;
     WiFiClientSecure client;
@@ -241,6 +242,10 @@ int ota()
                     if (Update.isFinished())
                     {
                         log_v("Update successfully completed. Rebooting.");
+                        // Write version on SD card
+                        String path = "/version.txt";
+
+                        sd.writeFile(path, version);
                     }
                     else
                     {

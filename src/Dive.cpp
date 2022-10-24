@@ -49,7 +49,7 @@ String Dive::Start(long time, lat lat, lng lng, int freq, bool mode)
 
 String Dive::End(long time, lat lat, lng lng, bool mode)
 {
-    if (mode == 0)//write partial silo if dynamic ode
+    if (mode == 0) // write partial silo if dynamic ode
         writeSilo(true, currentRecords);
 
     if (writeMetadataEnd(time, lat, lng) == -1)
@@ -106,8 +106,8 @@ int Dive::writeSilo(bool last, int currentRecord)
     for (int i = 0; i < (last == true ? currentRecord : siloRecordSize); i++)
     {
         JsonArray record = records.createNestedArray();
-        record.add(diveRecords[i].Temp);
-        record.add(diveRecords[i].Depth);
+        record.add((float)((int)diveRecords[i].Temp * 100.0) / 100.0);
+        record.add((float)((int)diveRecords[i].Depth * 100.0) / 100.0);
         record.add(diveRecords[i].Time);
     }
 

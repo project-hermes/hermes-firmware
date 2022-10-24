@@ -27,7 +27,7 @@ int uploadDives(SecureDigital sd);
 
 /// @brief get firmware and install if newer
 /// @return 
-int ota();
+int ota(SecureDigital sd);
 
 /// @brief 
 /// @param data json content 

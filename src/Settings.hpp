@@ -1,7 +1,7 @@
 #ifndef SETTINGS_HPP
 #define SETTINGS_HPP
 
-#define FIRMWARE_VERSION 2.6
+#define FIRMWARE_VERSION 2.7
 
 // Dives parameters
 #define uS_TO_S_FACTOR 1000000     /* Conversion factor for micro seconds to seconds */
