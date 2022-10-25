@@ -99,7 +99,7 @@ void sleep(bool timer)
 
         uint64_t wakeMask = 1ULL << GPIO_CONFIG;
         esp_sleep_enable_ext1_wakeup(wakeMask, ESP_EXT1_WAKEUP_ANY_HIGH);
-        esp_sleep_enable_timer_wakeup((TIME_TO_SLEEP_STATIC *1000 - OFFSET_SLEEP_STATIC) * 1000);
+        esp_sleep_enable_timer_wakeup((TIME_TO_SLEEP_STATIC * 1000 - OFFSET_SLEEP_STATIC) * 1000);
     }
     else // if other mode, wake up with water, config, or charging
     {
@@ -155,7 +155,8 @@ void dynamicDive()
         long time = 0;
         unsigned long startTime = millis(), previous = millis();
 
-        while (count < MAX_DYNAMIC_COUNTER)
+        // if valid dive, dive end after short time, if dive still not valid, dive end after long time 
+        while (count < validDive ? MAX_DYNAMIC_COUNTER_VALID_DIVE : MAX_DYNAMIC_COUNTER_NO_DIVE)
         {
             if (millis() - previous > TIME_DYNAMIC_MODE)
             {
