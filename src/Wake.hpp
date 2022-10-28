@@ -24,5 +24,6 @@ void startStaticDive();
 void staticDiveWakeUp();
 void sleep(bool timer = false);
 void selectMode();
+bool detectSurface();
 
 #endif

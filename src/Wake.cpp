@@ -1,13 +1,13 @@
 #include <Wake.hpp>
 
-// #define MODE_DEBUG
+#define MODE_DEBUG
 
 using namespace std;
 SecureDigital sd;
 
 // variables permanentes pour le mode de plongée statique
 RTC_DATA_ATTR Dive staticDive(&sd);
-RTC_DATA_ATTR bool diveMode = 0; //0:dynamic, 1:static
+RTC_DATA_ATTR bool diveMode = 0; // 0:dynamic, 1:static
 RTC_DATA_ATTR int staticCount;
 RTC_DATA_ATTR long staticTime;
 
@@ -54,14 +54,27 @@ void wake()
                 if (i == GPIO_WATER) // Start dive
                 {
                     log_d("Wake up gpio water");
+
                     if (diveMode == STATIC_MODE)
                     { // if Water wake up and static Mode
+                        log_d("Static dive");
                         startStaticDive();
                         sleep(true);
                     }
                     else
                     {
-                        dynamicDive();
+
+                        // detect if the wake up is because of diving or not
+                        // If not, do not start dynamic dive
+                        if (detectSurface())
+                        {
+                            log_d("Dynamic dive");
+                            dynamicDive();
+                        }
+                        else
+                        {
+                            log_d("Surface not detected");
+                        }
                     }
                 }
                 else if (i == GPIO_VCC_SENSE) // wifi config
@@ -203,7 +216,7 @@ void dynamicDive()
 
         if (validDive)
         {
-            //if dive valid (Pmin reached) get end GPS and 
+            // if dive valid (Pmin reached) get end GPS and
             String end = d.End(now(), gps.getLat(), gps.getLng(), diveMode);
 
             if (end == "")
@@ -327,7 +340,7 @@ void selectMode()
 {
     diveMode = !diveMode;
 
-    if (diveMode==STATIC_MODE)
+    if (diveMode == STATIC_MODE)
     {
         log_v("Static Diving");
 
@@ -347,4 +360,46 @@ void selectMode()
             delay(150);
         }
     }
+}
+
+bool detectSurface()
+{
+    log_d("START WATER DETECTION");
+
+    pinMode(GPIO_SENSOR_POWER, OUTPUT);
+    digitalWrite(GPIO_SENSOR_POWER, LOW);
+    delay(10);
+    Wire.begin(I2C_SDA, I2C_SCL);
+    delay(10);
+
+    ms5837 depthSensor = ms5837();
+    double depth = 0, min = 999, max = -999;
+    int count = 0, avgCount = 0;
+    double avg = 0;
+    unsigned long start = millis();
+    while (millis() - start <= TIME_SURFACE_DETECTION * 1000)
+    {
+
+        while (count < 10)
+        {
+            count++;
+            depth = depthSensor.getDepth();
+            log_d("Depth = %f", depth);
+            if (depth < min)
+                min = depth;
+            if (depth > max)
+                max = depth;
+            delay(50);
+        }
+        avg += max - min;
+        max = -999;
+        min = 999;
+        avgCount++;
+        count = 0;
+    }
+
+    if (avg / (float)avgCount > LEVEL_SURFACE_DETECTION)
+        return 1;
+    else
+        return 0;
 }
