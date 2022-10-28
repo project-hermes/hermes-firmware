@@ -46,7 +46,7 @@ public:
             log_v("UNKNOWN");
         }
         uint64_t cardSize = SD.cardSize() / (1024 * 1024);
-        log_d("SD Card Size: %lluMB\n", cardSize);
+        log_i("SD Card Size: %lluMB\n", cardSize);
     };
 
     int makeDirectory(String path)

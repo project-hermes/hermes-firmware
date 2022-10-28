@@ -26,7 +26,7 @@ ms5837::ms5837()
         Wire.requestFrom(_addr, 2);
         _msCalibrationValue[i] = (Wire.read() << 8) | Wire.read();
 
-        log_d("calibration value %d: %d\n", i, _msCalibrationValue[i]);
+        log_v("calibration value %d: %d\n", i, _msCalibrationValue[i]);
 
     }
 
@@ -112,7 +112,7 @@ void ms5837::readValues()
     _rawTemp = (_rawTemp << 8) | Wire.read();
     _rawTemp = (_rawTemp << 8) | Wire.read();
 
-    log_d("rawTemp: %u rawPressure: %u\n", _rawTemp, _rawPres);
+    log_v("rawTemp: %u rawPressure: %u\n", _rawTemp, _rawPres);
 
 }
 
