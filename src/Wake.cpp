@@ -1,13 +1,13 @@
 #include <Wake.hpp>
 
-//#define MODE_DEBUG
+// #define MODE_DEBUG
 
 using namespace std;
 SecureDigital sd;
 
 // variables permanentes pour le mode de plongée statique
 RTC_DATA_ATTR Dive staticDive(&sd);
-RTC_DATA_ATTR bool staticMode = false;
+RTC_DATA_ATTR bool diveMode = 0; //0:dynamic, 1:static
 RTC_DATA_ATTR int staticCount;
 RTC_DATA_ATTR long staticTime;
 
@@ -54,8 +54,8 @@ void wake()
                 if (i == GPIO_WATER) // Start dive
                 {
                     log_d("Wake up gpio water");
-                    if (staticMode)
-                    { // if Water wake up and staticMode
+                    if (diveMode == STATIC_MODE)
+                    { // if Water wake up and static Mode
                         startStaticDive();
                         sleep(true);
                     }
@@ -135,7 +135,7 @@ void dynamicDive()
 
     bool led_on = false;
 
-    if (d.Start(now(), gps.getLat(), gps.getLng(), TIME_DYNAMIC_MODE, staticMode) == "")
+    if (d.Start(now(), gps.getLat(), gps.getLng(), TIME_DYNAMIC_MODE, diveMode) == "")
     {
         pinMode(GPIO_LED1, OUTPUT);
         for (int i = 0; i < 3; i++)
@@ -155,7 +155,7 @@ void dynamicDive()
         long time = 0;
         unsigned long startTime = millis(), previous = millis();
 
-        // if valid dive, dive end after short time, if dive still not valid, dive end after long time 
+        // if valid dive, dive end after short time, if dive still not valid, dive end after long time
         while (count < validDive ? MAX_DYNAMIC_COUNTER_VALID_DIVE : MAX_DYNAMIC_COUNTER_NO_DIVE)
         {
             if (millis() - previous > TIME_DYNAMIC_MODE)
@@ -166,12 +166,14 @@ void dynamicDive()
                 temp = temperatureSensor.getTemp();
                 depth = depthSensor.getDepth();
 
-                if (validDive == false) // if dive still not valid, check if depthMin reached
+                // if dive still not valid, check if depthMin reached
+                if (validDive == false)
                 {
                     if (depth > MIN_DEPTH_VALID_DIVE)
                         validDive = true; // if minDepth reached, dive is valid
                 }
 
+                // check water only if depth < MAX DEPTH CHECK WATER
                 if (depth < MAX_DEPTH_CHECK_WATER)
                 {
                     pinMode(GPIO_PROBE, INPUT); // enable probe pin to allow water detection
@@ -199,19 +201,21 @@ void dynamicDive()
             }
         }
 
-        String ID = d.End(now(), gps.getLat(), gps.getLng(), staticMode);
-
-        if (ID == "")
+        if (validDive)
         {
-            log_e("error ending the dive");
+            //if dive valid (Pmin reached) get end GPS and 
+            String end = d.End(now(), gps.getLat(), gps.getLng(), diveMode);
+
+            if (end == "")
+            {
+                log_e("error ending the dive");
+            }
         }
         else
         {
-            if (!validDive)
-            {
-                d.deleteID(ID);
-                log_v("Dive not valid, record deleted");
-            }
+            // if dive not valid (Pmin not reached), delete records and clean index
+            d.deleteID(d.getID());
+            log_v("Dive not valid, record deleted");
         }
     }
 }
@@ -231,7 +235,7 @@ void startStaticDive()
 
     staticCount = 0;
 
-    if (staticDive.Start(now(), gps.getLat(), gps.getLng(), TIME_TO_SLEEP_STATIC, staticMode) == "")
+    if (staticDive.Start(now(), gps.getLat(), gps.getLng(), TIME_TO_SLEEP_STATIC, diveMode) == "")
     {
         pinMode(GPIO_LED1, OUTPUT);
         for (int i = 0; i < 3; i++)
@@ -309,7 +313,7 @@ void staticDiveWakeUp()
     {
         GNSS gps = GNSS();
 
-        String ID = staticDive.End(now(), gps.getLat(), gps.getLng(), staticMode);
+        String ID = staticDive.End(now(), gps.getLat(), gps.getLng(), diveMode);
 
         if (ID == "")
         {
@@ -321,9 +325,9 @@ void staticDiveWakeUp()
 
 void selectMode()
 {
-    staticMode = !staticMode;
+    diveMode = !diveMode;
 
-    if (staticMode)
+    if (diveMode==STATIC_MODE)
     {
         log_v("Static Diving");
 

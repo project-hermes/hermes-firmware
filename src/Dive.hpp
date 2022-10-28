@@ -49,6 +49,8 @@ public:
     void deleteID(String ID);
     
     void sendJson();
+        String getID();
+
 
 private:
     Storage *storage;
@@ -68,7 +70,6 @@ private:
     int deleteIndex(String deletedID);
 
     String createID(long time);
-    String getID();
 
     int writeMetadataEnd(long time, double lat, double lng);
     int writeMetadataStart(long time, double lat, double lng, int freq, bool mode);
