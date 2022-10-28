@@ -120,7 +120,6 @@ void dynamicDive()
 {
     pinMode(GPIO_PROBE, OUTPUT); // set gpio probe pin as low output to avoid corrosion
     digitalWrite(GPIO_PROBE, LOW);
-
     pinMode(GPIO_SENSOR_POWER, OUTPUT);
     digitalWrite(GPIO_SENSOR_POWER, LOW);
     delay(10);
@@ -296,6 +295,24 @@ void staticDiveWakeUp()
         pinMode(GPIO_PROBE, OUTPUT); // set gpio probe pin as low output to avoid corrosion
         digitalWrite(GPIO_PROBE, LOW);
     }
+}
+
+void staticDiveWakeUp()
+{
+    pinMode(GPIO_PROBE, OUTPUT); // set gpio probe pin as low output to avoid corrosion
+    digitalWrite(GPIO_PROBE, LOW);
+    pinMode(GPIO_SENSOR_POWER, OUTPUT);
+    digitalWrite(GPIO_SENSOR_POWER, LOW);
+    delay(10);
+    Wire.begin(I2C_SDA, I2C_SCL);
+    delay(10);
+
+    tsys01 temperatureSensor = tsys01();
+    ms5837 depthSensor = ms5837();
+    double depth, temp;
+
+    temp = temperatureSensor.getTemp();
+    depth = depthSensor.getDepth();
 
     Record tempRecord = Record{temp, depth, staticTime};
     staticDive.NewRecordStatic(tempRecord);
@@ -304,7 +321,11 @@ void staticDiveWakeUp()
     {
         sleep(true); // sleep with timer
     }
-    else
+
+    Record tempRecord = Record{temp, depth, staticTime};
+    staticDive.NewRecordStatic(tempRecord);
+
+    if (staticCount < MAX_STATIC_COUNTER)
     {
         GNSS gps = GNSS();
 
@@ -330,7 +351,49 @@ void selectMode()
         delay(3000);
         digitalWrite(GPIO_LED4, LOW);
     }
-    else
+}
+
+void recordStaticDive()
+{
+    pinMode(GPIO_SENSOR_POWER, OUTPUT);
+    digitalWrite(GPIO_SENSOR_POWER, LOW);
+    delay(10);
+    Wire.begin(I2C_SDA, I2C_SCL);
+    delay(10);
+
+    tsys01 temperatureSensor = tsys01();
+    ms5837 depthSensor = ms5837();
+    double depth, temp;
+
+    temp = temperatureSensor.getTemp();
+    depth = depthSensor.getDepth();
+    staticTime += TIME_TO_SLEEP_STATIC;
+
+    Record tempRecord = Record{temp, depth, staticTime};
+    staticDive.NewRecordStatic(tempRecord);
+}
+
+void endStaticDive()
+{
+    pinMode(GPIO_SENSOR_POWER, OUTPUT);
+    digitalWrite(GPIO_SENSOR_POWER, LOW);
+    delay(10);
+    Wire.begin(I2C_SDA, I2C_SCL);
+    delay(10);
+    GNSS gps = GNSS();
+    tsys01 temperatureSensor = tsys01();
+    ms5837 depthSensor = ms5837();
+    double depth, temp;
+
+    temp = temperatureSensor.getTemp();
+    depth = depthSensor.getDepth();
+    staticTime += TIME_TO_SLEEP_STATIC;
+
+    Record tempRecord = Record{temp, depth, staticTime};
+    staticDive.NewRecordStatic(tempRecord);
+    String ID = staticDive.End(now(), gps.getLat(), gps.getLng());
+
+    if (ID == "")
     {
         log_v("Dynamic diving");
 
