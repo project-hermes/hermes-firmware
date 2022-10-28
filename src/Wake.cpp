@@ -78,7 +78,6 @@ void wake()
                     log_d("Wake up gpio config");
                     selectMode();
                 }
-
             }
 
             i++;
@@ -296,6 +295,24 @@ void staticDiveWakeUp()
         pinMode(GPIO_PROBE, OUTPUT); // set gpio probe pin as low output to avoid corrosion
         digitalWrite(GPIO_PROBE, LOW);
     }
+}
+
+void staticDiveWakeUp()
+{
+    pinMode(GPIO_PROBE, OUTPUT); // set gpio probe pin as low output to avoid corrosion
+    digitalWrite(GPIO_PROBE, LOW);
+    pinMode(GPIO_SENSOR_POWER, OUTPUT);
+    digitalWrite(GPIO_SENSOR_POWER, LOW);
+    delay(10);
+    Wire.begin(I2C_SDA, I2C_SCL);
+    delay(10);
+
+    tsys01 temperatureSensor = tsys01();
+    ms5837 depthSensor = ms5837();
+    double depth, temp;
+
+    temp = temperatureSensor.getTemp();
+    depth = depthSensor.getDepth();
 
     Record tempRecord = Record{temp, depth, staticTime};
     staticDive.NewRecordStatic(tempRecord);
@@ -304,7 +321,11 @@ void staticDiveWakeUp()
     {
         sleep(true); // sleep with timer
     }
-    else
+
+    Record tempRecord = Record{temp, depth, staticTime};
+    staticDive.NewRecordStatic(tempRecord);
+
+    if (staticCount < MAX_STATIC_COUNTER)
     {
         GNSS gps = GNSS();
 
@@ -329,18 +350,6 @@ void selectMode()
         digitalWrite(GPIO_LED4, HIGH);
         delay(3000);
         digitalWrite(GPIO_LED4, LOW);
-    }
-    else
-    {
-        log_v("Dynamic diving");
-
-        for (int i = 0; i < 10; i++)
-        {
-            digitalWrite(GPIO_LED4, HIGH);
-            delay(150);
-            digitalWrite(GPIO_LED4, LOW);
-            delay(150);
-        }
     }
 }
 
@@ -386,6 +395,14 @@ void endStaticDive()
 
     if (ID == "")
     {
-        log_e("error ending the dive");
+        log_v("Dynamic diving");
+
+        for (int i = 0; i < 10; i++)
+        {
+            digitalWrite(GPIO_LED4, HIGH);
+            delay(150);
+            digitalWrite(GPIO_LED4, LOW);
+            delay(150);
+        }
     }
 }
