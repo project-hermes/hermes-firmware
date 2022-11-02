@@ -44,8 +44,8 @@ GNSS::GNSS()
                 log_d("Position: %f , %f", getLat(), getLng());
                 gpsOK = true;
             }
+            depth = depthSensor.getDepth();
         }
-        depth = depthSensor.getDepth();
     }
     digitalWrite(GPIO_LED2, LOW); // turn syn led off when gps connected
 }
