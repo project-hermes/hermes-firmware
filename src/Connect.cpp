@@ -161,7 +161,7 @@ void startPortal(SecureDigital sd)
     }
 
     log_v("USB disconnected, go back to sleep");
-    sleep(false);
+    sleep(DEFAULT_SLEEP);
 }
 
 int ota(SecureDigital sd)

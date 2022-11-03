@@ -1,7 +1,5 @@
 #include <Wake.hpp>
 
-// #define MODE_DEBUG
-
 using namespace std;
 SecureDigital sd;
 
@@ -15,11 +13,12 @@ RTC_DATA_ATTR long staticTime;
 /// @return
 void IRAM_ATTR ISR()
 {
-    sleep(false);
+    sleep(DEFAULT_SLEEP);
 }
 
 void wake()
 {
+    // setup gpios
     log_i("firmware version:%1.2f\n", FIRMWARE_VERSION);
     pinMode(GPIO_LED2, OUTPUT);
     pinMode(GPIO_LED3, OUTPUT);
@@ -33,8 +32,12 @@ void wake()
     pinMode(GPIO_PROBE, OUTPUT); // set gpio probe pin as low output to avoid corrosion
     digitalWrite(GPIO_PROBE, LOW);
 
-    uint64_t wakeup_reason = esp_sleep_get_wakeup_cause();
+    // check if sd card is ready, if not go back to sleep without water detection wake up
+    if (sd.ready() == false)
+        sleep(SDCARD_ERROR_SLEEP);
 
+    // check wake up reason
+    uint64_t wakeup_reason = esp_sleep_get_wakeup_cause();
     if (wakeup_reason == ESP_SLEEP_WAKEUP_TIMER)
     {
         log_d("Wake up timer static");
@@ -44,7 +47,6 @@ void wake()
     else
     {
         wakeup_reason = esp_sleep_get_ext1_wakeup_status();
-
         uint64_t mask = 1;
         int i = 0;
         while (i < 64)
@@ -59,7 +61,7 @@ void wake()
                     { // if Water wake up and static Mode
                         log_d("Static dive");
                         startStaticDive();
-                        sleep(true);
+                        sleep(SLEEP_WITH_TIMER);
                     }
                     else
                     {
@@ -97,36 +99,6 @@ void wake()
             mask = mask << 1;
         }
     }
-}
-
-void sleep(bool timer)
-{
-
-    if (timer) // if static diving, wake up with timer or config button
-    {
-
-        pinMode(GPIO_PROBE, OUTPUT); // set gpio probe pin as low output to avoid corrosion
-        digitalWrite(GPIO_PROBE, LOW);
-        gpio_hold_en(GPIO_NUM_33);
-        gpio_deep_sleep_hold_en();
-
-        uint64_t wakeMask = 1ULL << GPIO_CONFIG;
-        esp_sleep_enable_ext1_wakeup(wakeMask, ESP_EXT1_WAKEUP_ANY_HIGH);
-        esp_sleep_enable_timer_wakeup((TIME_TO_SLEEP_STATIC * 1000 - OFFSET_SLEEP_STATIC) * 1000);
-    }
-    else // if other mode, wake up with water, config, or charging
-    {
-        pinMode(GPIO_PROBE, INPUT); // Set GPIO PROBE back to input to allow water detection
-#ifndef MODE_DEBUG
-        uint64_t wakeMask = 1ULL << GPIO_WATER | 1ULL << GPIO_CONFIG | 1ULL << GPIO_VCC_SENSE;
-#else
-        uint64_t wakeMask = 1ULL << GPIO_WATER | 1ULL << GPIO_CONFIG;
-#endif
-        esp_sleep_enable_ext1_wakeup(wakeMask, ESP_EXT1_WAKEUP_ANY_HIGH);
-    }
-
-    log_i("Going to sleep now");
-    esp_deep_sleep_start();
 }
 
 void dynamicDive()
@@ -323,7 +295,7 @@ void staticDiveWakeUp()
 
     if (staticCount < MAX_STATIC_COUNTER)
     {
-        sleep(true); // sleep with timer
+        sleep(SLEEP_WITH_TIMER); // sleep with timer
     }
     else
     {
@@ -335,7 +307,7 @@ void staticDiveWakeUp()
         {
             log_e("error ending the dive");
         }
-        sleep(false); // sleep without timer waiting for other dive or config button
+        sleep(DEFAULT_SLEEP); // sleep without timer waiting for other dive or config button
     }
 }
 

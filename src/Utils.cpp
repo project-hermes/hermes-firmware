@@ -1,11 +1,3 @@
-#include <WiFi.h>
-#include <mbedtls/md.h>
-
-#include <Storage/SecureDigital.hpp>
-#include <ArduinoJson.h>
-
-#include <Arduino.h>
-
 #include <Utils.hpp>
 
 String remoraID()
@@ -37,3 +29,56 @@ String remoraID()
     return hash;
 }
 
+
+void sleep(int mode)
+{
+
+    uint64_t wakeMask;
+    switch (mode)
+    {
+        // if other mode, wake up with water, config, or charging
+    case DEFAULT_SLEEP:
+        log_i("DEFAULT SLEEP");
+        pinMode(GPIO_PROBE, INPUT); // Set GPIO PROBE back to input to allow water detection
+#ifndef MODE_DEBUG
+        wakeMask = 1ULL << GPIO_WATER | 1ULL << GPIO_CONFIG | 1ULL << GPIO_VCC_SENSE;
+#else
+        wakeMask = 1ULL << GPIO_WATER | 1ULL << GPIO_CONFIG;
+#endif
+        esp_sleep_enable_ext1_wakeup(wakeMask, ESP_EXT1_WAKEUP_ANY_HIGH);
+
+        break;
+
+        // if static diving, wake up with timer or config button
+    case SLEEP_WITH_TIMER:
+        log_i("SLEEP WITH TIMER");
+        pinMode(GPIO_PROBE, OUTPUT); // set gpio probe pin as low output to avoid corrosion
+        digitalWrite(GPIO_PROBE, LOW);
+        gpio_hold_en(GPIO_NUM_33);
+        gpio_deep_sleep_hold_en();
+
+        wakeMask = 1ULL << GPIO_CONFIG;
+        esp_sleep_enable_ext1_wakeup(wakeMask, ESP_EXT1_WAKEUP_ANY_HIGH);
+        esp_sleep_enable_timer_wakeup((TIME_TO_SLEEP_STATIC * 1000 - OFFSET_SLEEP_STATIC) * 1000);
+        break;
+
+        // if sd card error sleep without water detection
+    case SDCARD_ERROR_SLEEP:
+    case LOW_BATT_SLEEP:
+        log_i("SD CARD ERROR OR LOW BATT SLEEP");
+        pinMode(GPIO_PROBE, OUTPUT); // set gpio probe pin as low output to avoid corrosion
+        digitalWrite(GPIO_PROBE, LOW);
+        gpio_hold_en(GPIO_NUM_33);
+        gpio_deep_sleep_hold_en();
+#ifndef MODE_DEBUG
+        wakeMask = 1ULL << GPIO_CONFIG | 1ULL << GPIO_VCC_SENSE;
+#else
+        wakeMask = 1ULL << GPIO_CONFIG;
+#endif
+        esp_sleep_enable_ext1_wakeup(wakeMask, ESP_EXT1_WAKEUP_ANY_HIGH);
+        break;
+    }
+
+    log_i("Going to sleep now");
+    esp_deep_sleep_start();
+}
