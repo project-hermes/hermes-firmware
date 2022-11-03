@@ -1,6 +1,6 @@
 #include <Wake.hpp>
 
-#define MODE_DEBUG
+// #define MODE_DEBUG
 
 using namespace std;
 SecureDigital sd;
