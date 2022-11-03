@@ -106,8 +106,8 @@ int Dive::writeSilo(bool last, int currentRecord)
     for (int i = 0; i < (last == true ? currentRecord : siloRecordSize); i++)
     {
         JsonArray record = records.createNestedArray();
-        record.add((float)((int)diveRecords[i].Temp * 100.0) / 100.0);
-        record.add((float)((int)diveRecords[i].Depth * 100.0) / 100.0);
+        record.add((float)((int)(diveRecords[i].Temp * 100.0)) / 100.0);
+        record.add((float)((int)(diveRecords[i].Depth * 100.0)) / 100.0);
         record.add(diveRecords[i].Time);
     }
 

@@ -27,8 +27,8 @@ GNSS::GNSS()
         {
             if (gps.date.isValid() && gps.time.isValid())
             {
-                log_d("Date: %d/%d/%d", gps.date.day(), gps.date.month(), gps.date.year());
-                log_d("Hour: %d:%d:%d", gps.time.hour(), gps.time.minute(), gps.time.second());
+                log_v("Date: %d/%d/%d", gps.date.day(), gps.date.month(), gps.date.year());
+                log_v("Hour: %d:%d:%d", gps.time.hour(), gps.time.minute(), gps.time.second());
 
                 TimeElements gpsTime = {
                     (uint8_t)gps.time.second(),
@@ -42,7 +42,7 @@ GNSS::GNSS()
             }
             if (gps.location.isValid())
             {
-                log_d("Position: %f , %f", getLat(), getLng());
+                log_v("Position: %f , %f", getLat(), getLng());
                 gpsOK = true;
             }
             depth = depthSensor.getDepth();
@@ -88,8 +88,8 @@ void GNSS::parse()
         {
             if (gps.date.isValid() && gps.time.isValid())
             {
-                log_d("Date: %d/%d/%d", gps.date.day(), gps.date.month(), gps.date.year());
-                log_d("Hour: %d:%d:%d", gps.time.hour(), gps.time.minute(), gps.time.second());
+                log_v("Date: %d/%d/%d", gps.date.day(), gps.date.month(), gps.date.year());
+                log_v("Hour: %d:%d:%d", gps.time.hour(), gps.time.minute(), gps.time.second());
 
                 TimeElements gpsTime = {
                     (uint8_t)gps.time.second(),
@@ -103,7 +103,7 @@ void GNSS::parse()
             }
             if (gps.location.isValid())
             {
-                log_d("Position: %f , %f", getLat(), getLng());
+                log_v("Position: %f , %f", getLat(), getLng());
                 gpsOK = true;
             }
             depth = depthSensor.getDepth();
