@@ -24,6 +24,8 @@
 #define TIME_GPS 600                      // research time gps (seconds)
 #define TIME_SURFACE_DETECTION 5          // Time to detect surface crossing at the beginning of the dive (seconds)
 #define LEVEL_SURFACE_DETECTION 0.02      // depth max-min to detect surface crossing at the beggining of the dive
+#define TIME_CHECK_BATTERY 60             // Time between 2 battery ccheck during dynamic dive. (seconds)
+#define LOW_BATTERY_LEVEL 3.3           //  If vBat < Low battery level, go back to sleep without water detection wakeup (Volts)
 
 // Upload parameters
 const String indexPath = "/index.json";

@@ -9,5 +9,6 @@
 
 String remoraID();
 void sleep(int mode = 0);
+float readBattery();
 
 #endif

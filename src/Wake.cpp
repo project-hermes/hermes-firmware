@@ -20,6 +20,7 @@ void wake()
 {
     // setup gpios
     log_i("firmware version:%1.2f\n", FIRMWARE_VERSION);
+    pinMode(GPIO_LED1, OUTPUT);
     pinMode(GPIO_LED2, OUTPUT);
     pinMode(GPIO_LED3, OUTPUT);
     pinMode(GPIO_LED4, OUTPUT);
@@ -31,6 +32,10 @@ void wake()
 
     pinMode(GPIO_PROBE, OUTPUT); // set gpio probe pin as low output to avoid corrosion
     digitalWrite(GPIO_PROBE, LOW);
+
+    ////////////TEST//////////
+    dynamicDive();
+    ///////////////////////////
 
     // check if sd card is ready, if not go back to sleep without water detection wake up
     if (sd.ready() == false)
@@ -174,26 +179,29 @@ void dynamicDive()
                     pinMode(GPIO_PROBE, OUTPUT); // set gpio probe pin as low output to avoid corrosion
                     digitalWrite(GPIO_PROBE, LOW);
                 }
+
+                // Save record
                 Record tempRecord = Record{temp, depth, time};
                 d.NewRecord(tempRecord);
 
+                // blink led
                 if (led_on)
-                {
                     digitalWrite(GPIO_LED4, HIGH);
-                }
                 else
-                {
                     digitalWrite(GPIO_LED4, LOW);
-                }
                 led_on = !led_on;
+
+                // check battery, back to sleep  witjout water detection if lowBat
+                if (time % TIME_CHECK_BATTERY == 0)
+                    if (readBattery() < LOW_BATTERY_LEVEL)
+                        sleep(LOW_BATT_SLEEP);
             }
         }
 
+        // if dive valid (Pmin reached) get end GPS, else delete records and clean index
         if (validDive)
         {
-            // if dive valid (Pmin reached) get end GPS and
             String end = d.End(now(), gps.getLat(), gps.getLng(), diveMode);
-
             if (end == "")
             {
                 log_e("error ending the dive");
@@ -201,7 +209,6 @@ void dynamicDive()
         }
         else
         {
-            // if dive not valid (Pmin not reached), delete records and clean index
             d.deleteID(d.getID());
             log_v("Dive not valid, record deleted");
         }
@@ -292,6 +299,10 @@ void staticDiveWakeUp()
 
     Record tempRecord = Record{temp, depth, staticTime};
     staticDive.NewRecordStatic(tempRecord);
+
+    // check battery, back to sleep  witjout water detection if lowBat
+    if (readBattery() < LOW_BATTERY_LEVEL)
+        sleep(LOW_BATT_SLEEP);
 
     if (staticCount < MAX_STATIC_COUNTER)
     {

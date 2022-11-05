@@ -29,10 +29,8 @@ String remoraID()
     return hash;
 }
 
-
 void sleep(int mode)
 {
-
     uint64_t wakeMask;
     switch (mode)
     {
@@ -81,4 +79,15 @@ void sleep(int mode)
 
     log_i("Going to sleep now");
     esp_deep_sleep_start();
+}
+
+float readBattery()
+{
+    pinMode(GPIO_VBATT, INPUT_PULLUP);
+    float val = analogRead(GPIO_VBATT);
+    float vBat = ((val / 4095.0)) * 3.3 * 1.33;
+    log_d("Batterie = %1.2f", vBat);
+    pinMode(GPIO_VBATT, OUTPUT);
+
+    return vBat;
 }
