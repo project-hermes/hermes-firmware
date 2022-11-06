@@ -1,6 +1,4 @@
 #include <Connect.hpp>
-#include <ArduinoJson.h>
-#include <Dive.hpp>
 
 int uploadDives(SecureDigital sd)
 {
@@ -86,14 +84,12 @@ int post(String data, bool metadata)
         {
             log_e("BEGIN FAILED...");
         }
-        // Specify Authorization-type header
-        // String recv_token = "eyJ0eXAiOiJK..."; // Complete Bearer token
-        // recv_token = "Bearer " + recv_token;	// Adding "Bearer " before token
 
-        // http.addHeader("Authorization", recv_token); // Adding Bearer token as HTTP header
+        http.setAuthorization(user.c_str(), password.c_str());
         http.addHeader("Content-Type", "application/json");
         int code = http.POST(data.c_str());
         log_i("HTTP RETURN = %d", code);
+        log_i("HTTP RETURN = %s", http.getString().c_str());
 
         // Disconnect
         http.end();
@@ -174,6 +170,8 @@ int ota(SecureDigital sd)
     client.setInsecure();
     String updateURL;
     log_i("Adresse IP : %s", WiFi.localIP().toString().c_str());
+
+    http.setAuthorization(user.c_str(), password.c_str());
 
     if (http.begin(firmwareURL))
     {

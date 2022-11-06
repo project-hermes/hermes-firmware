@@ -29,8 +29,5 @@
 
 // Upload parameters
 const String indexPath = "/index.json";
-const String metadataURL = "https://project-hermes.azurewebsites.net/api/Remora";
-const String recordURL = "https://project-hermes.azurewebsites.net/api/RemoraRecord";
-const String firmwareURL = "https://project-hermes.azurewebsites.net/api/Firmware";
 
 #endif

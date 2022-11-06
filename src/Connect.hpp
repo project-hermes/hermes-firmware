@@ -9,6 +9,9 @@
 #include <Navigation/GNSS.hpp>
 #include <Utils.hpp>
 #include <Settings.hpp>
+#include <ArduinoJson.h>
+#include <Dive.hpp>
+#include <secret.hpp>
 
 #define SUCCESS 0
 #define FIRMWARE_SIZE_ERROR -2
@@ -26,13 +29,13 @@ void startPortal(SecureDigital sd);
 int uploadDives(SecureDigital sd);
 
 /// @brief get firmware and install if newer
-/// @return 
+/// @return
 int ota(SecureDigital sd);
 
-/// @brief 
-/// @param data json content 
+/// @brief
+/// @param data json content
 /// @param metadata 0 = recordURL; 1 = metadataURL;
-/// @return 
+/// @return
 int post(String data, bool metadata = 0);
 
 #endif
