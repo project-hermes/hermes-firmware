@@ -31,6 +31,14 @@ String remoraID()
 
 void sleep(int mode)
 {
+    SecureDigital sd;
+
+    String path = "/sleep.txt";
+    if (sd.findFile(path) == -1)
+        sd.writeFile(path, String(mode));
+    else
+        sd.appendFile(path, String(mode));
+
     uint64_t wakeMask;
     switch (mode)
     {

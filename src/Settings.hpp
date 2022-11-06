@@ -7,7 +7,7 @@
 #define LOW_BATT_SLEEP 3
 
 #define FIRMWARE_VERSION 2.7
-#define MODE_DEBUG
+//#define MODE_DEBUG
 
 // Dives parameters
 #define uS_TO_S_FACTOR 1000000            /* Conversion factor for micro seconds to seconds */

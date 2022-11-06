@@ -33,10 +33,6 @@ void wake()
     pinMode(GPIO_PROBE, OUTPUT); // set gpio probe pin as low output to avoid corrosion
     digitalWrite(GPIO_PROBE, LOW);
 
-    ////////////TEST//////////
-    dynamicDive();
-    ///////////////////////////
-
     // check if sd card is ready, if not go back to sleep without water detection wake up
     if (sd.ready() == false)
         sleep(SDCARD_ERROR_SLEEP);
@@ -301,23 +297,18 @@ void staticDiveWakeUp()
     staticDive.NewRecordStatic(tempRecord);
 
     // check battery, back to sleep  witjout water detection if lowBat
-    if (readBattery() < LOW_BATTERY_LEVEL)
-        sleep(LOW_BATT_SLEEP);
+    if (staticTime % TIME_CHECK_BATTERY == 0)
+        if (readBattery() < LOW_BATTERY_LEVEL)
+            sleep(LOW_BATT_SLEEP);
 
-    if (staticCount < MAX_STATIC_COUNTER)
-    {
-        sleep(SLEEP_WITH_TIMER); // sleep with timer
-    }
-    else
+    if (staticCount < MAX_STATIC_COUNTER) // if water detected sleep with timer
+        sleep(SLEEP_WITH_TIMER);
+    else // if no water, end static dive
     {
         GNSS gps = GNSS();
-
         String ID = staticDive.End(now(), gps.getLat(), gps.getLng(), diveMode);
-
         if (ID == "")
-        {
             log_e("error ending the dive");
-        }
         sleep(DEFAULT_SLEEP); // sleep without timer waiting for other dive or config button
     }
 }
