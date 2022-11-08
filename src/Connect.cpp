@@ -2,7 +2,9 @@
 
 int uploadDives(SecureDigital sd)
 {
+    unsigned long diveID = 0;
     bool error = false;
+    int count = 0;
     StaticJsonDocument<1024> indexJson;
     sd = SecureDigital();
 
@@ -27,41 +29,67 @@ int uploadDives(SecureDigital sd)
             continue;
         }
 
-        String metadata = sd.readFile("/" + ID + "/metadata.json");
-        log_v("RECORDS = %s ", metadata.c_str());
-        if (post(metadata, true) != 200) // post metadata
-            error = true;
-        else
-            log_i("Metadata posted");
+        String path = "/" + ID + "/metadata.json";
+        String metadata = sd.readFile(path);
 
-        int i = 0;
-        String path = "/" + ID + "/silo0.json";
+        // check if metadata already uploaded
+        diveID = checkId(metadata);
 
-        String records = "";
-        while (sd.findFile(path) == 0)
+        // if not, post metadata and get new id
+        if (diveID == 0)
         {
-            String records = sd.readFile(path);
-            log_d("SILO = %s", records.c_str());
-            if (records != "")
+            while (diveID <= 0 && count < POST_RETRY)
             {
-                if (post(records, false) != 200) // post silos
+                count++;
+                diveID = postMetadata(metadata);
+                if (diveID > 0)
                 {
-                    error = true;
-                    log_e("Silo %d not posted", i);
+                    // update metadata with bdd ID on SD card
+                    sd.writeFile(path, updateId(metadata, diveID));
                 }
-                else
-                    log_i("Silo %d posted", i);
             }
-            else
-            {
-                log_i("Silo %d empty, skipped", i);
-            }
-            i++;
-            path = "/" + ID + "/silo" + i + ".json";
         }
 
+        // error during metadata upload
+        if (diveID < 0)
+        {
+            error = true;
+        }
+        else
+        {
+            log_i("Metadata posted, start post records");
+
+            int i = 0;
+            path = "/" + ID + "/silo0.json";
+            String records = "";
+
+            while (sd.findFile(path) == 0)
+            {
+                path = "/" + ID + "/silo" + i + ".json";
+                records = sd.readFile(path);
+
+                if (records != "")
+                {
+                    records = updateId(records, diveID);
+
+                    if (postRecordData(records, diveID) != 200) // post silos
+                    {
+                        error = true;
+                        log_e("Silo %d not posted", i);
+                    }
+                    else
+                        log_i("Silo %d posted", i);
+                }
+                else
+                    log_i("Silo %d empty, skipped", i);
+
+                i++;
+            }
+        }
         if (!error)
+        {
             dive["uploaded"] = 1;
+        }
     }
 
     String buffer;
@@ -70,7 +98,53 @@ int uploadDives(SecureDigital sd)
     return sd.writeFile(indexPath, buffer);
 }
 
-int post(String data, bool metadata)
+unsigned long postMetadata(String data)
+{
+    unsigned long id = 0;
+    if ((WiFi.status() == WL_CONNECTED))
+    {
+
+        HTTPClient http;
+        WiFiClientSecure client;
+        client.setInsecure();
+
+        if (!http.begin(client, metadataURL))
+        {
+            log_e("BEGIN FAILED...");
+        }
+
+        http.setAuthorization(user.c_str(), password.c_str());
+        http.addHeader("Content-Type", "application/json");
+        int code = http.POST(data.c_str());
+        log_i("HTTP RETURN = %d", code);
+
+        if (code != 200)
+            return -3;
+        else
+        {
+            String response = http.getString().c_str();
+
+            // convert getString() into id
+            StaticJsonDocument<1024> responseJson;
+            deserializeJson(responseJson, response);
+            id = responseJson["id"];
+            log_i("ID RETURN = %d", id);
+
+            return id;
+        }
+
+        // Disconnect
+        http.end();
+    }
+    else
+    {
+        log_e("****** NO WIFI!!");
+        return -1;
+    }
+    return -2;
+}
+
+int postRecordData(String data, unsigned long id)
 {
 
     if ((WiFi.status() == WL_CONNECTED))
@@ -80,7 +154,7 @@ int post(String data, bool metadata)
         WiFiClientSecure client;
         client.setInsecure();
 
-        if (!http.begin(client, metadata ? metadataURL : recordURL))
+        if (!http.begin(client, recordURL))
         {
             log_e("BEGIN FAILED...");
         }
@@ -270,4 +344,23 @@ int ota(SecureDigital sd)
     }
     http.end();
     return SUCCESS;
+}
+
+String updateId(String data, unsigned long diveID)
+{
+    DynamicJsonDocument dataJson(jsonSize);
+    deserializeJson(dataJson, data);
+    dataJson["id"] = diveID;
+    String returnJson = "";
+    serializeJson(dataJson, returnJson);
+    return returnJson;
+}
+
+unsigned long checkId(String data)
+{
+    unsigned long id = 0;
+    DynamicJsonDocument dataJson(jsonSize);
+    deserializeJson(dataJson, data);
+    id = dataJson["id"];
+    return id;
 }

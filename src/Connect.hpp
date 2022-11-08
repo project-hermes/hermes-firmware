@@ -32,10 +32,23 @@ int uploadDives(SecureDigital sd);
 /// @return
 int ota(SecureDigital sd);
 
-/// @brief
+/// @brief post dive metadatas
 /// @param data json content
-/// @param metadata 0 = recordURL; 1 = metadataURL;
 /// @return
-int post(String data, bool metadata = 0);
+unsigned long postMetadata(String data);
+
+/// @brief post dive record data
+/// @param data json content
+/// @return
+int postRecordData(String data, unsigned long id);
+
+/// @brief complete silo with id return after post metadata
+/// @param records silo  pointer
+/// @param diveID ID return by database after post metadata
+/// @return updated string
+String updateId(String data, unsigned long diveID);
+unsigned long checkId(String data);
+
+const int jsonSize = 27000;
 
 #endif

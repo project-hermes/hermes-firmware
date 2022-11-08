@@ -29,5 +29,6 @@
 
 // Upload parameters
 const String indexPath = "/index.json";
+#define POST_RETRY  1 //numbre of post attemp before skip.
 
 #endif
