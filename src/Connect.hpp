@@ -46,8 +46,9 @@ int postRecordData(String data, unsigned long id);
 /// @param records silo  pointer
 /// @param diveID ID return by database after post metadata
 /// @return updated string
-String updateId(String data, unsigned long diveID);
+String updateId(String data, unsigned long bddID);
 unsigned long checkId(String data);
+int putEndTransfer(unsigned long bddID);
 
 const int jsonSize = 27000;
 

@@ -2,7 +2,7 @@
 
 int uploadDives(SecureDigital sd)
 {
-    unsigned long diveID = 0;
+    unsigned long bddID = 0, siloID = 0;
     bool error = false;
     int count = 0;
     StaticJsonDocument<1024> indexJson;
@@ -33,25 +33,25 @@ int uploadDives(SecureDigital sd)
         String metadata = sd.readFile(path);
 
         // check if metadata already uploaded
-        diveID = checkId(metadata);
+        bddID = checkId(metadata);
 
         // if not, post metadata and get new id
-        if (diveID == 0)
+        if (bddID == 0)
         {
-            while (diveID <= 0 && count < POST_RETRY)
+            while (bddID <= 0 && count < POST_RETRY)
             {
                 count++;
-                diveID = postMetadata(metadata);
-                if (diveID > 0)
+                bddID = postMetadata(metadata);
+                if (bddID > 0)
                 {
                     // update metadata with bdd ID on SD card
-                    sd.writeFile(path, updateId(metadata, diveID));
+                    sd.writeFile(path, updateId(metadata, bddID));
                 }
             }
         }
 
         // error during metadata upload
-        if (diveID < 0)
+        if (bddID < 0)
         {
             error = true;
         }
@@ -70,15 +70,32 @@ int uploadDives(SecureDigital sd)
 
                 if (records != "")
                 {
-                    records = updateId(records, diveID);
-
-                    if (postRecordData(records, diveID) != 200) // post silos
+                    // check if silo already uploaded
+                    siloID = checkId(records);
+                    if (siloID == 0)
                     {
-                        error = true;
-                        log_e("Silo %d not posted", i);
+                        // add bdd ID before upload
+                        records = updateId(records, bddID);
+
+                        count = 0;
+                        int code = 0;
+                        while (code != 200 && count < POST_RETRY)
+                        {
+                            if (postRecordData(records, bddID) != 200) // post silos
+                            {
+                                error = true;
+                                log_e("Silo %d not posted", i);
+                            }
+                            else
+                            {
+                                log_i("Silo %d posted", i);
+                                // update silo with bdd ID on SD card
+                                sd.writeFile(path, records);
+                            }
+
+                            count++;
+                        }
                     }
-                    else
-                        log_i("Silo %d posted", i);
                 }
                 else
                     log_i("Silo %d empty, skipped", i);
@@ -88,6 +105,7 @@ int uploadDives(SecureDigital sd)
         }
         if (!error)
         {
+            // try PUT, if return 200 then "uploaded"=1
             dive["uploaded"] = 1;
         }
     }
@@ -346,11 +364,11 @@ int ota(SecureDigital sd)
     return SUCCESS;
 }
 
-String updateId(String data, unsigned long diveID)
+String updateId(String data, unsigned long bddID)
 {
     DynamicJsonDocument dataJson(jsonSize);
     deserializeJson(dataJson, data);
-    dataJson["id"] = diveID;
+    dataJson["id"] = bddID;
     String returnJson = "";
     serializeJson(dataJson, returnJson);
     return returnJson;
