@@ -106,7 +106,8 @@ int uploadDives(SecureDigital sd)
         if (!error)
         {
             // try PUT, if return 200 then "uploaded"=1
-            dive["uploaded"] = 1;
+            if (putEndTransfer(bddID) == 200)
+                dive["uploaded"] = 1;
         }
     }
 
@@ -381,4 +382,35 @@ unsigned long checkId(String data)
     deserializeJson(dataJson, data);
     id = dataJson["id"];
     return id;
+}
+
+int putEndTransfer(unsigned long bddID)
+{
+    if ((WiFi.status() == WL_CONNECTED))
+    {
+
+        HTTPClient http;
+        WiFiClientSecure client;
+        client.setInsecure();
+
+        if (!http.begin(client, endTansfertURL + bddID))
+        {
+            log_e("BEGIN FAILED...");
+        }
+
+        http.setAuthorization(user.c_str(), password.c_str());
+        http.addHeader("Content-Type", "text/plain");
+        int code = http.PUT(String(bddID).c_str());
+        log_i("PUT RETURN = %d", code);
+
+        // Disconnect
+        http.end();
+        return code;
+    }
+    else
+    {
+        log_e("****** NO WIFI!!");
+        return -1;
+    }
+    return -2;
 }
