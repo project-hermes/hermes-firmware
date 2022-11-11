@@ -19,7 +19,7 @@ int uploadDives(SecureDigital sd)
     JsonObject root = indexJson.as<JsonObject>();
     for (JsonObject::iterator it = root.begin(); it != root.end(); ++it)
     {
-        log_i("\n\nNEW DIVE TO UPLOAD\n\n");
+        log_i("\n\nNEW DIVE TO UPLOAD");
 
         error = false;
         String ID = it->key().c_str();
@@ -45,7 +45,6 @@ int uploadDives(SecureDigital sd)
             while (bddID <= 0 && count < POST_RETRY)
             {
                 count++;
-                log_i("\n\nPOST METADATA");
                 bddID = postMetadata(metadata);
                 if (bddID > 0)
                 {
@@ -143,7 +142,7 @@ unsigned long postMetadata(String data)
         http.setAuthorization(user.c_str(), password.c_str());
         http.addHeader("Content-Type", "application/json");
         int code = http.POST(data.c_str());
-        log_i("HTTP RETURN = %d", code);
+        log_d("HTTP RETURN = %d", code);
 
         if (code != 200)
             return -3;
@@ -155,7 +154,7 @@ unsigned long postMetadata(String data)
             StaticJsonDocument<1024> responseJson;
             deserializeJson(responseJson, response);
             id = responseJson["id"];
-            log_i("ID RETURN = %d", id);
+            log_d("ID RETURN = %d", id);
 
             return id;
         }
