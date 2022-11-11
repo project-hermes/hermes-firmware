@@ -19,6 +19,8 @@ int uploadDives(SecureDigital sd)
     JsonObject root = indexJson.as<JsonObject>();
     for (JsonObject::iterator it = root.begin(); it != root.end(); ++it)
     {
+        log_i("\n\nNEW DIVE TO UPLOAD\n\n");
+
         error = false;
         String ID = it->key().c_str();
 
@@ -33,14 +35,17 @@ int uploadDives(SecureDigital sd)
         String metadata = sd.readFile(path);
 
         // check if metadata already uploaded
+        bddID = 0;
         bddID = checkId(metadata);
 
         // if not, post metadata and get new id
         if (bddID == 0)
         {
+            count = 0;
             while (bddID <= 0 && count < POST_RETRY)
             {
                 count++;
+                log_i("\n\nPOST METADATA");
                 bddID = postMetadata(metadata);
                 if (bddID > 0)
                 {
@@ -49,6 +54,7 @@ int uploadDives(SecureDigital sd)
                 }
             }
         }
+        log_i("BDD ID = %i\n\n", bddID);
 
         // error during metadata upload
         if (bddID < 0)
@@ -107,14 +113,16 @@ int uploadDives(SecureDigital sd)
         {
             // try PUT, if return 200 then "uploaded"=1
             if (putEndTransfer(bddID) == 200)
-                dive["uploaded"] = 1;
+            {
+                dive["uploaded"] = bddID;
+                String buffer;
+                serializeJson(indexJson, buffer);
+                sd.writeFile(indexPath, buffer);
+            }
         }
     }
 
-    String buffer;
-    serializeJson(indexJson, buffer);
-
-    return sd.writeFile(indexPath, buffer);
+    return 1;
 }
 
 unsigned long postMetadata(String data)
@@ -181,8 +189,8 @@ int postRecordData(String data, unsigned long id)
         http.setAuthorization(user.c_str(), password.c_str());
         http.addHeader("Content-Type", "application/json");
         int code = http.POST(data.c_str());
-        log_i("HTTP RETURN = %d", code);
-        log_i("HTTP RETURN = %s", http.getString().c_str());
+        log_d("HTTP RETURN = %d", code);
+        //log_i("HTTP RETURN = %s", http.getString().c_str());
 
         // Disconnect
         http.end();
