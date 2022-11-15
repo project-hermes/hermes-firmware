@@ -5,6 +5,8 @@ int uploadDives(SecureDigital sd)
     unsigned long bddID = 0, siloID = 0;
     bool error = false;
     int count = 0;
+    bool postOK = false;
+
     StaticJsonDocument<1024> indexJson;
     sd = SecureDigital();
 
@@ -70,7 +72,6 @@ int uploadDives(SecureDigital sd)
 
             while (sd.findFile(path) == 0)
             {
-                path = "/" + ID + "/silo" + i + ".json";
                 records = sd.readFile(path);
 
                 if (records != "")
@@ -83,13 +84,14 @@ int uploadDives(SecureDigital sd)
                         records = updateId(records, bddID);
 
                         count = 0;
-                        int code = 0;
-                        while (code != 200 && count < POST_RETRY)
+                        postOK = false;
+                        while (postOK == false && count < POST_RETRY)
                         {
                             if (postRecordData(records, bddID) != 200) // post silos
                             {
                                 error = true;
                                 log_e("Silo %d not posted", i);
+                                postOK = true;
                             }
                             else
                             {
@@ -106,17 +108,22 @@ int uploadDives(SecureDigital sd)
                     log_i("Silo %d empty, skipped", i);
 
                 i++;
+                path = "/" + ID + "/silo" + i + ".json";
             }
         }
         if (!error)
         {
-            // try PUT, if return 200 then "uploaded"=1
-            if (putEndTransfer(bddID) == 200)
+            postOK = false;
+            while (postOK == false && count < POST_RETRY)
             {
-                dive["uploaded"] = bddID;
-                String buffer;
-                serializeJson(indexJson, buffer);
-                sd.writeFile(indexPath, buffer);
+                if (putEndTransfer(bddID) == 200)
+                {
+                    postOK = true;
+                    dive["uploaded"] = bddID;
+                    String buffer;
+                    serializeJson(indexJson, buffer);
+                    sd.writeFile(indexPath, buffer);
+                }
             }
         }
     }
@@ -189,7 +196,7 @@ int postRecordData(String data, unsigned long id)
         http.addHeader("Content-Type", "application/json");
         int code = http.POST(data.c_str());
         log_d("HTTP RETURN = %d", code);
-        //log_i("HTTP RETURN = %s", http.getString().c_str());
+        // log_i("HTTP RETURN = %s", http.getString().c_str());
 
         // Disconnect
         http.end();

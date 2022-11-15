@@ -7,7 +7,7 @@
 #define LOW_BATT_SLEEP 3
 
 #define FIRMWARE_VERSION 3.0
-//#define MODE_DEBUG
+// #define MODE_DEBUG
 
 // Dives parameters
 #define uS_TO_S_FACTOR 1000000            /* Conversion factor for micro seconds to seconds */
@@ -25,10 +25,10 @@
 #define TIME_SURFACE_DETECTION 5          // Time to detect surface crossing at the beginning of the dive (seconds)
 #define LEVEL_SURFACE_DETECTION 0.02      // depth max-min to detect surface crossing at the beggining of the dive
 #define TIME_CHECK_BATTERY 60             // Time between 2 battery ccheck during dynamic dive. (seconds)
-#define LOW_BATTERY_LEVEL 3.3           //  If vBat < Low battery level, go back to sleep without water detection wakeup (Volts)
+#define LOW_BATTERY_LEVEL 3.3             //  If vBat < Low battery level, go back to sleep without water detection wakeup (Volts)
 
 // Upload parameters
 const String indexPath = "/index.json";
-#define POST_RETRY  1 //numbre of post attemp before skip.
+#define POST_RETRY 3 // number of post attemp before skip.
 
 #endif
