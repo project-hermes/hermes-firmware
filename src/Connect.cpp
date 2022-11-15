@@ -91,10 +91,10 @@ int uploadDives(SecureDigital sd)
                             {
                                 error = true;
                                 log_e("Silo %d not posted", i);
-                                postOK = true;
                             }
                             else
                             {
+                                postOK = true;
                                 log_i("Silo %d posted", i);
                                 // update silo with bdd ID on SD card
                                 sd.writeFile(path, records);
@@ -123,6 +123,7 @@ int uploadDives(SecureDigital sd)
                     String buffer;
                     serializeJson(indexJson, buffer);
                     sd.writeFile(indexPath, buffer);
+                    log_i("Dive %d fully upload", bddID);
                 }
             }
         }
