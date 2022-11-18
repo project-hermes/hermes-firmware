@@ -15,11 +15,14 @@
 #include <Connect.hpp>
 #include <Settings.hpp>
 
+#define DYNAMIC_MODE 0
+#define STATIC_MODE 1
+
 void wake();
 void dynamicDive();
 void startStaticDive();
 void staticDiveWakeUp();
-void sleep(bool timer = false);
 void selectMode();
+bool detectSurface();
 
 #endif

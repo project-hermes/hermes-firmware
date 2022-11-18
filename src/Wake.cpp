@@ -1,13 +1,11 @@
 #include <Wake.hpp>
 
-//#define MODE_DEBUG
-
 using namespace std;
 SecureDigital sd;
 
 // variables permanentes pour le mode de plongée statique
 RTC_DATA_ATTR Dive staticDive(&sd);
-RTC_DATA_ATTR bool staticMode = false;
+RTC_DATA_ATTR bool diveMode = 0; // 0:dynamic, 1:static
 RTC_DATA_ATTR int staticCount;
 RTC_DATA_ATTR long staticTime;
 
@@ -15,12 +13,14 @@ RTC_DATA_ATTR long staticTime;
 /// @return
 void IRAM_ATTR ISR()
 {
-    sleep(false);
+    sleep(DEFAULT_SLEEP);
 }
 
 void wake()
 {
+    // setup gpios
     log_i("firmware version:%1.2f\n", FIRMWARE_VERSION);
+    pinMode(GPIO_LED1, OUTPUT);
     pinMode(GPIO_LED2, OUTPUT);
     pinMode(GPIO_LED3, OUTPUT);
     pinMode(GPIO_LED4, OUTPUT);
@@ -33,8 +33,12 @@ void wake()
     pinMode(GPIO_PROBE, OUTPUT); // set gpio probe pin as low output to avoid corrosion
     digitalWrite(GPIO_PROBE, LOW);
 
-    uint64_t wakeup_reason = esp_sleep_get_wakeup_cause();
+    // check if sd card is ready, if not go back to sleep without water detection wake up
+    if (sd.ready() == false)
+        sleep(SDCARD_ERROR_SLEEP);
 
+    // check wake up reason
+    uint64_t wakeup_reason = esp_sleep_get_wakeup_cause();
     if (wakeup_reason == ESP_SLEEP_WAKEUP_TIMER)
     {
         log_d("Wake up timer static");
@@ -44,7 +48,6 @@ void wake()
     else
     {
         wakeup_reason = esp_sleep_get_ext1_wakeup_status();
-
         uint64_t mask = 1;
         int i = 0;
         while (i < 64)
@@ -54,14 +57,27 @@ void wake()
                 if (i == GPIO_WATER) // Start dive
                 {
                     log_d("Wake up gpio water");
-                    if (staticMode)
-                    { // if Water wake up and staticMode
+
+                    if (diveMode == STATIC_MODE)
+                    { // if Water wake up and static Mode
+                        log_d("Static dive");
                         startStaticDive();
-                        sleep(true);
+                        sleep(SLEEP_WITH_TIMER);
                     }
                     else
                     {
-                        dynamicDive();
+
+                        // detect if the wake up is because of diving or not
+                        // If not, do not start dynamic dive
+                        if (detectSurface())
+                        {
+                            log_d("Dynamic dive");
+                            dynamicDive();
+                        }
+                        else
+                        {
+                            log_d("Surface not detected");
+                        }
                     }
                 }
                 else if (i == GPIO_VCC_SENSE) // wifi config
@@ -86,36 +102,6 @@ void wake()
     }
 }
 
-void sleep(bool timer)
-{
-
-    if (timer) // if static diving, wake up with timer or config button
-    {
-
-        pinMode(GPIO_PROBE, OUTPUT); // set gpio probe pin as low output to avoid corrosion
-        digitalWrite(GPIO_PROBE, LOW);
-        gpio_hold_en(GPIO_NUM_33);
-        gpio_deep_sleep_hold_en();
-
-        uint64_t wakeMask = 1ULL << GPIO_CONFIG;
-        esp_sleep_enable_ext1_wakeup(wakeMask, ESP_EXT1_WAKEUP_ANY_HIGH);
-        esp_sleep_enable_timer_wakeup((TIME_TO_SLEEP_STATIC *1000 - OFFSET_SLEEP_STATIC) * 1000);
-    }
-    else // if other mode, wake up with water, config, or charging
-    {
-        pinMode(GPIO_PROBE, INPUT); // Set GPIO PROBE back to input to allow water detection
-#ifndef MODE_DEBUG
-        uint64_t wakeMask = 1ULL << GPIO_WATER | 1ULL << GPIO_CONFIG | 1ULL << GPIO_VCC_SENSE;
-#else
-        uint64_t wakeMask = 1ULL << GPIO_WATER | 1ULL << GPIO_CONFIG;
-#endif
-        esp_sleep_enable_ext1_wakeup(wakeMask, ESP_EXT1_WAKEUP_ANY_HIGH);
-    }
-
-    log_i("Going to sleep now");
-    esp_deep_sleep_start();
-}
-
 void dynamicDive()
 {
     pinMode(GPIO_PROBE, OUTPUT); // set gpio probe pin as low output to avoid corrosion
@@ -134,7 +120,7 @@ void dynamicDive()
 
     bool led_on = false;
 
-    if (d.Start(now(), gps.getLat(), gps.getLng(), TIME_DYNAMIC_MODE, staticMode) == "")
+    if (d.Start(now(), gps.getLat(), gps.getLng(), TIME_DYNAMIC_MODE, diveMode) == "")
     {
         pinMode(GPIO_LED1, OUTPUT);
         for (int i = 0; i < 3; i++)
@@ -154,7 +140,8 @@ void dynamicDive()
         long time = 0;
         unsigned long startTime = millis(), previous = millis();
 
-        while (count < MAX_DYNAMIC_COUNTER)
+        // if valid dive, dive end after short time, if dive still not valid, dive end after long time
+        while (count < (validDive == true ? MAX_DYNAMIC_COUNTER_VALID_DIVE : MAX_DYNAMIC_COUNTER_NO_DIVE))
         {
             if (millis() - previous > TIME_DYNAMIC_MODE)
             {
@@ -164,52 +151,61 @@ void dynamicDive()
                 temp = temperatureSensor.getTemp();
                 depth = depthSensor.getDepth();
 
-                if (validDive == false) // if dive still not valid, check if depthMin reached
+                // if dive still not valid, check if depthMin reached
+                if (validDive == false)
                 {
                     if (depth > MIN_DEPTH_VALID_DIVE)
+                    {
+                        log_d("Valid Dive");
                         validDive = true; // if minDepth reached, dive is valid
+                    }
                 }
 
+                // check water only if depth < MAX DEPTH CHECK WATER
                 if (depth < MAX_DEPTH_CHECK_WATER)
                 {
                     pinMode(GPIO_PROBE, INPUT); // enable probe pin to allow water detection
                     int value = analogRead(GPIO_WATER);
-                    log_d("Value = %d", value);
                     if (value >= WATER_TRIGGER)
                         count = 0; // reset No water counter
                     else
-                        count++;                 // if no water counter++
+                        count++; // if no water counter++
+                    log_d("Count = %d", count);
                     pinMode(GPIO_PROBE, OUTPUT); // set gpio probe pin as low output to avoid corrosion
                     digitalWrite(GPIO_PROBE, LOW);
                 }
+
+                // Save record
                 Record tempRecord = Record{temp, depth, time};
                 d.NewRecord(tempRecord);
 
+                // blink led
                 if (led_on)
-                {
                     digitalWrite(GPIO_LED4, HIGH);
-                }
                 else
-                {
                     digitalWrite(GPIO_LED4, LOW);
-                }
                 led_on = !led_on;
+
+                // check battery, back to sleep  witjout water detection if lowBat
+                if (time % TIME_CHECK_BATTERY == 0)
+                    if (readBattery() < LOW_BATTERY_LEVEL)
+                        sleep(LOW_BATT_SLEEP);
             }
         }
 
-        String ID = d.End(now(), gps.getLat(), gps.getLng(), staticMode);
-
-        if (ID == "")
+        // if dive valid (Pmin reached) get end GPS, else delete records and clean index
+        if (validDive)
         {
-            log_e("error ending the dive");
+            String end = d.End(now(), gps.getLat(), gps.getLng(), diveMode);
+            if (end == "")
+            {
+                log_e("error ending the dive");
+            }
         }
         else
         {
-            if (!validDive)
-            {
-                d.deleteID(ID);
-                log_v("Dive not valid, record deleted");
-            }
+            d.deleteID(d.getID());
+            log_v("Dive not valid, record deleted");
         }
     }
 }
@@ -229,7 +225,7 @@ void startStaticDive()
 
     staticCount = 0;
 
-    if (staticDive.Start(now(), gps.getLat(), gps.getLng(), TIME_TO_SLEEP_STATIC, staticMode) == "")
+    if (staticDive.Start(now(), gps.getLat(), gps.getLng(), TIME_TO_SLEEP_STATIC, diveMode) == "")
     {
         pinMode(GPIO_LED1, OUTPUT);
         for (int i = 0; i < 3; i++)
@@ -317,33 +313,28 @@ void staticDiveWakeUp()
     Record tempRecord = Record{temp, depth, staticTime};
     staticDive.NewRecordStatic(tempRecord);
 
-    if (staticCount < MAX_STATIC_COUNTER)
-    {
-        sleep(true); // sleep with timer
-    }
+    // check battery, back to sleep  witjout water detection if lowBat
+    if (staticTime % TIME_CHECK_BATTERY == 0)
+        if (readBattery() < LOW_BATTERY_LEVEL)
+            sleep(LOW_BATT_SLEEP);
 
-    Record tempRecord = Record{temp, depth, staticTime};
-    staticDive.NewRecordStatic(tempRecord);
-
-    if (staticCount < MAX_STATIC_COUNTER)
+    if (staticCount < MAX_STATIC_COUNTER) // if water detected sleep with timer
+        sleep(SLEEP_WITH_TIMER);
+    else // if no water, end static dive
     {
         GNSS gps = GNSS();
-
-        String ID = staticDive.End(now(), gps.getLat(), gps.getLng(), staticMode);
-
+        String ID = staticDive.End(now(), gps.getLat(), gps.getLng(), diveMode);
         if (ID == "")
-        {
             log_e("error ending the dive");
-        }
-        sleep(false); // sleep without timer waiting for other dive or config button
+        sleep(DEFAULT_SLEEP); // sleep without timer waiting for other dive or config button
     }
 }
 
 void selectMode()
 {
-    staticMode = !staticMode;
+    diveMode = !diveMode;
 
-    if (staticMode)
+    if (diveMode == STATIC_MODE)
     {
         log_v("Static Diving");
 
@@ -405,4 +396,46 @@ void endStaticDive()
             delay(150);
         }
     }
+}
+
+bool detectSurface()
+{
+    log_d("START WATER DETECTION");
+
+    pinMode(GPIO_SENSOR_POWER, OUTPUT);
+    digitalWrite(GPIO_SENSOR_POWER, LOW);
+    delay(10);
+    Wire.begin(I2C_SDA, I2C_SCL);
+    delay(10);
+
+    ms5837 depthSensor = ms5837();
+    double depth = 0, min = 999, max = -999;
+    int count = 0, avgCount = 0;
+    double avg = 0;
+    unsigned long start = millis();
+    while (millis() - start <= TIME_SURFACE_DETECTION * 1000)
+    {
+
+        while (count < 10)
+        {
+            count++;
+            depth = depthSensor.getDepth();
+            log_d("Depth = %f", depth);
+            if (depth < min)
+                min = depth;
+            if (depth > max)
+                max = depth;
+            delay(50);
+        }
+        avg += max - min;
+        max = -999;
+        min = 999;
+        avgCount++;
+        count = 0;
+    }
+
+    if (avg / (float)avgCount > LEVEL_SURFACE_DETECTION)
+        return 1;
+    else
+        return 0;
 }

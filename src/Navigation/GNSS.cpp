@@ -4,22 +4,31 @@
 
 GNSS::GNSS()
 {
-    digitalWrite(GPIO_LED2,HIGH);
+    digitalWrite(GPIO_LED2, HIGH);
     pinMode(GPIO_GPS_POWER, OUTPUT);
     digitalWrite(GPIO_GPS_POWER, LOW);
+
     GPSSerial.begin(9600);
     delay(2000); // TODO this needs to be more dynamic
     unsigned long start = millis();
     bool gpsOK = false;
 
-    while (millis() < start + TIME_GPS * 1000 && !gpsOK)
+    pinMode(GPIO_SENSOR_POWER, OUTPUT);
+    digitalWrite(GPIO_SENSOR_POWER, LOW);
+    delay(10);
+    Wire.begin(I2C_SDA, I2C_SCL);
+    delay(10);
+    ms5837 depthSensor = ms5837();
+    double depth = depthSensor.getDepth();
+
+    while (millis() < start + TIME_GPS * 1000 && !gpsOK && depth < MAX_DEPTH_CHECK_WATER)
     {
         if (GPSSerial.available() > 0 && gps.encode(GPSSerial.read()))
         {
             if (gps.date.isValid() && gps.time.isValid())
             {
-                log_d("Date: %d/%d/%d", gps.date.day(), gps.date.month(), gps.date.year());
-                log_d("Hour: %d:%d:%d", gps.time.hour(), gps.time.minute(), gps.time.second());
+                log_v("Date: %d/%d/%d", gps.date.day(), gps.date.month(), gps.date.year());
+                log_v("Hour: %d:%d:%d", gps.time.hour(), gps.time.minute(), gps.time.second());
 
                 TimeElements gpsTime = {
                     (uint8_t)gps.time.second(),
@@ -33,14 +42,14 @@ GNSS::GNSS()
             }
             if (gps.location.isValid())
             {
-                log_d("Position: %f , %f", getLat(), getLng());
-                gpsOK=true;
+                log_v("Position: %f , %f", getLat(), getLng());
+                gpsOK = true;
             }
-
+            depth = depthSensor.getDepth();
         }
     }
-    digitalWrite(GPIO_LED2,LOW);//turn syn led off when gps connected
-
+    digitalWrite(GPIO_LED2, LOW); // turn syn led off when gps connected
+    log_d("GPS OK");
 }
 
 lat GNSS::getLat()
@@ -57,7 +66,7 @@ lng GNSS::getLng()
 
 void GNSS::parse()
 {
-   digitalWrite(GPIO_LED2,HIGH);
+    digitalWrite(GPIO_LED2, HIGH);
     pinMode(GPIO_GPS_POWER, OUTPUT);
     digitalWrite(GPIO_GPS_POWER, LOW);
     GPSSerial.begin(9600);
@@ -65,14 +74,22 @@ void GNSS::parse()
     unsigned long start = millis();
     bool gpsOK = false;
 
-    while (millis() < start + TIME_GPS * 1000 && !gpsOK)
+    pinMode(GPIO_SENSOR_POWER, OUTPUT);
+    digitalWrite(GPIO_SENSOR_POWER, LOW);
+    delay(10);
+    Wire.begin(I2C_SDA, I2C_SCL);
+    delay(10);
+    ms5837 depthSensor = ms5837();
+    double depth = depthSensor.getDepth();
+
+    while (millis() < start + TIME_GPS * 1000 && !gpsOK && depth < MAX_DEPTH_CHECK_WATER)
     {
         if (GPSSerial.available() > 0 && gps.encode(GPSSerial.read()))
         {
             if (gps.date.isValid() && gps.time.isValid())
             {
-                log_d("Date: %d/%d/%d", gps.date.day(), gps.date.month(), gps.date.year());
-                log_d("Hour: %d:%d:%d", gps.time.hour(), gps.time.minute(), gps.time.second());
+                log_v("Date: %d/%d/%d", gps.date.day(), gps.date.month(), gps.date.year());
+                log_v("Hour: %d:%d:%d", gps.time.hour(), gps.time.minute(), gps.time.second());
 
                 TimeElements gpsTime = {
                     (uint8_t)gps.time.second(),
@@ -86,12 +103,12 @@ void GNSS::parse()
             }
             if (gps.location.isValid())
             {
-                log_d("Position: %f , %f", getLat(), getLng());
-                gpsOK=true;
+                log_v("Position: %f , %f", getLat(), getLng());
+                gpsOK = true;
             }
-
+            depth = depthSensor.getDepth();
         }
     }
-    digitalWrite(GPIO_LED2,LOW);//turn syn led off when gps connected
-
+    digitalWrite(GPIO_LED2, LOW); // turn syn led off when gps connected
+    log_d("GPS OK");
 }

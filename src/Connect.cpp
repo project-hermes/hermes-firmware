@@ -1,10 +1,12 @@
 #include <Connect.hpp>
-#include <ArduinoJson.h>
-#include <Dive.hpp>
 
 int uploadDives(SecureDigital sd)
 {
+    unsigned long bddID = 0, siloID = 0;
     bool error = false;
+    int count = 0;
+    bool postOK = false;
+
     StaticJsonDocument<1024> indexJson;
     sd = SecureDigital();
 
@@ -19,6 +21,8 @@ int uploadDives(SecureDigital sd)
     JsonObject root = indexJson.as<JsonObject>();
     for (JsonObject::iterator it = root.begin(); it != root.end(); ++it)
     {
+        log_i("\n\nNEW DIVE TO UPLOAD");
+
         error = false;
         String ID = it->key().c_str();
 
@@ -29,50 +33,152 @@ int uploadDives(SecureDigital sd)
             continue;
         }
 
-        String metadata = sd.readFile("/" + ID + "/metadata.json");
-        log_v("RECORDS = %s ", metadata.c_str());
-        if (post(metadata, true) != 200) // post metadata
-            error = true;
-        else
-            log_i("Metadata posted");
+        String path = "/" + ID + "/metadata.json";
+        String metadata = sd.readFile(path);
 
-        int i = 0;
-        String path = "/" + ID + "/silo0.json";
+        // check if metadata already uploaded
+        bddID = 0;
+        bddID = checkId(metadata);
 
-        String records = "";
-        while (sd.findFile(path) == 0)
+        // if not, post metadata and get new id
+        if (bddID == 0)
         {
-            String records = sd.readFile(path);
-            log_d("SILO = %s", records.c_str());
-            if (records != "")
+            count = 0;
+            while (bddID <= 0 && count < POST_RETRY)
             {
-                if (post(records,false) != 200) // post silos
+                count++;
+                bddID = postMetadata(metadata);
+                if (bddID > 0)
                 {
-                    error = true;
-                    log_e("Silo %d not posted", i);
+                    // update metadata with bdd ID on SD card
+                    sd.writeFile(path, updateId(metadata, bddID));
+                }
+            }
+        }
+        log_i("BDD ID = %i\n\n", bddID);
+
+        // error during metadata upload
+        if (bddID < 0)
+        {
+            error = true;
+        }
+        else
+        {
+            log_i("Metadata posted, start post records");
+
+            int i = 0;
+            path = "/" + ID + "/silo0.json";
+            String records = "";
+
+            while (sd.findFile(path) == 0)
+            {
+                records = sd.readFile(path);
+
+                if (records != "")
+                {
+                    // check if silo already uploaded
+                    siloID = checkId(records);
+                    if (siloID == 0)
+                    {
+                        // add bdd ID before upload
+                        records = updateId(records, bddID);
+
+                        count = 0;
+                        postOK = false;
+                        while (postOK == false && count < POST_RETRY)
+                        {
+                            if (postRecordData(records, bddID) != 200) // post silos
+                            {
+                                error = true;
+                                log_e("Silo %d not posted", i);
+                            }
+                            else
+                            {
+                                postOK = true;
+                                log_i("Silo %d posted", i);
+                                // update silo with bdd ID on SD card
+                                sd.writeFile(path, records);
+                            }
+
+                            count++;
+                        }
+                    }
                 }
                 else
-                    log_i("Silo %d posted", i);
-            }
-            else
-            {
-                log_i("Silo %d empty, skipped", i);
-            }
-            i++;
-            path = "/" + ID + "/silo" + i + ".json";
-        }
+                    log_i("Silo %d empty, skipped", i);
 
+                i++;
+                path = "/" + ID + "/silo" + i + ".json";
+            }
+        }
         if (!error)
-            dive["uploaded"] = 1;
+        {
+            postOK = false;
+            while (postOK == false && count < POST_RETRY)
+            {
+                if (putEndTransfer(bddID) == 200)
+                {
+                    postOK = true;
+                    dive["uploaded"] = bddID;
+                    String buffer;
+                    serializeJson(indexJson, buffer);
+                    sd.writeFile(indexPath, buffer);
+                    log_i("Dive %d fully upload", bddID);
+                }
+            }
+        }
     }
 
-    String buffer;
-    serializeJson(indexJson, buffer);
-
-    return sd.writeFile(indexPath, buffer);
+    return 1;
 }
 
-int post(String data, bool metadata)
+unsigned long postMetadata(String data)
+{
+    unsigned long id = 0;
+    if ((WiFi.status() == WL_CONNECTED))
+    {
+
+        HTTPClient http;
+        WiFiClientSecure client;
+        client.setInsecure();
+
+        if (!http.begin(client, metadataURL))
+        {
+            log_e("BEGIN FAILED...");
+        }
+
+        http.setAuthorization(user.c_str(), password.c_str());
+        http.addHeader("Content-Type", "application/json");
+        int code = http.POST(data.c_str());
+        log_d("HTTP RETURN = %d", code);
+
+        if (code != 200)
+            return -3;
+        else
+        {
+            String response = http.getString().c_str();
+
+            // convert getString() into id
+            StaticJsonDocument<1024> responseJson;
+            deserializeJson(responseJson, response);
+            id = responseJson["id"];
+            log_d("ID RETURN = %d", id);
+
+            return id;
+        }
+
+        // Disconnect
+        http.end();
+    }
+    else
+    {
+        log_e("****** NO WIFI!!");
+        return -1;
+    }
+    return -2;
+}
+
+int postRecordData(String data, unsigned long id)
 {
 
     if ((WiFi.status() == WL_CONNECTED))
@@ -82,18 +188,16 @@ int post(String data, bool metadata)
         WiFiClientSecure client;
         client.setInsecure();
 
-        if (!http.begin(client, metadata ? metadataURL : recordURL))
+        if (!http.begin(client, recordURL))
         {
             log_e("BEGIN FAILED...");
         }
-        // Specify Authorization-type header
-        // String recv_token = "eyJ0eXAiOiJK..."; // Complete Bearer token
-        // recv_token = "Bearer " + recv_token;	// Adding "Bearer " before token
 
-        // http.addHeader("Authorization", recv_token); // Adding Bearer token as HTTP header
+        http.setAuthorization(user.c_str(), password.c_str());
         http.addHeader("Content-Type", "application/json");
         int code = http.POST(data.c_str());
-        log_i("HTTP RETURN = %d", code);
+        log_d("HTTP RETURN = %d", code);
+        // log_i("HTTP RETURN = %s", http.getString().c_str());
 
         // Disconnect
         http.end();
@@ -134,7 +238,6 @@ void startPortal(SecureDigital sd)
         Portal.handleClient();
     }
     log_i("Adresse IP : %s", WiFi.localIP().toString().c_str());
-    
 
     // detach interrupt to keep remora alive during upload and ota process even if usb is disconnected
     detachInterrupt(GPIO_VCC_SENSE);
@@ -148,7 +251,7 @@ void startPortal(SecureDigital sd)
         error = true;
 
     log_v("Upload finished, start OTA");
-    if (ota() != SUCCESS)
+    if (ota(sd) != SUCCESS)
         error = true;
 
     pinMode(GPIO_LED1, OUTPUT);
@@ -162,17 +265,21 @@ void startPortal(SecureDigital sd)
     }
 
     log_v("USB disconnected, go back to sleep");
-    sleep(false);
+    sleep(DEFAULT_SLEEP);
 }
 
-int ota()
+int ota(SecureDigital sd)
 {
+    sd = SecureDigital();
+
     String firmwareName;
     HTTPClient http;
     WiFiClientSecure client;
     client.setInsecure();
     String updateURL;
     log_i("Adresse IP : %s", WiFi.localIP().toString().c_str());
+
+    http.setAuthorization(user.c_str(), password.c_str());
 
     if (http.begin(firmwareURL))
     {
@@ -241,6 +348,10 @@ int ota()
                     if (Update.isFinished())
                     {
                         log_v("Update successfully completed. Rebooting.");
+                        // Write version on SD card
+                        String path = "/version.txt";
+
+                        sd.writeFile(path, version);
                     }
                     else
                     {
@@ -267,4 +378,54 @@ int ota()
     }
     http.end();
     return SUCCESS;
+}
+
+String updateId(String data, unsigned long bddID)
+{
+    DynamicJsonDocument dataJson(jsonSize);
+    deserializeJson(dataJson, data);
+    dataJson["id"] = bddID;
+    String returnJson = "";
+    serializeJson(dataJson, returnJson);
+    return returnJson;
+}
+
+unsigned long checkId(String data)
+{
+    unsigned long id = 0;
+    DynamicJsonDocument dataJson(jsonSize);
+    deserializeJson(dataJson, data);
+    id = dataJson["id"];
+    return id;
+}
+
+int putEndTransfer(unsigned long bddID)
+{
+    if ((WiFi.status() == WL_CONNECTED))
+    {
+
+        HTTPClient http;
+        WiFiClientSecure client;
+        client.setInsecure();
+
+        if (!http.begin(client, endTansfertURL + bddID))
+        {
+            log_e("BEGIN FAILED...");
+        }
+
+        http.setAuthorization(user.c_str(), password.c_str());
+        http.addHeader("Content-Type", "text/plain");
+        int code = http.PUT(String(bddID).c_str());
+        log_i("PUT RETURN = %d", code);
+
+        // Disconnect
+        http.end();
+        return code;
+    }
+    else
+    {
+        log_e("****** NO WIFI!!");
+        return -1;
+    }
+    return -2;
 }
