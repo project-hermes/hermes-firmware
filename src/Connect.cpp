@@ -7,7 +7,8 @@ int uploadDives(SecureDigital sd)
     int count = 0;
     bool postOK = false;
 
-    StaticJsonDocument<1024> indexJson;
+    DynamicJsonDocument indexJson(27000);
+
     sd = SecureDigital();
 
     String data;
