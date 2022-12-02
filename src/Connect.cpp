@@ -7,7 +7,8 @@ int uploadDives(SecureDigital sd)
     int count = 0;
     bool postOK = false;
 
-    StaticJsonDocument<1024> indexJson;
+    DynamicJsonDocument indexJson(27000);
+
     sd = SecureDigital();
 
     String data;
@@ -18,16 +19,21 @@ int uploadDives(SecureDigital sd)
         return -2;
     }
     deserializeJson(indexJson, data);
+    log_v("DATA = %s", data.c_str());
     JsonObject root = indexJson.as<JsonObject>();
+
     for (JsonObject::iterator it = root.begin(); it != root.end(); ++it)
     {
-        log_i("\n\nNEW DIVE TO UPLOAD");
+        log_i("NEW DIVE TO UPLOAD");
 
         error = false;
         String ID = it->key().c_str();
+        log_v("ID = %s", ID.c_str());
 
         JsonObject dive = indexJson[ID].as<JsonObject>();
         const int uploaded = dive["uploaded"];
+        log_v("Uploaded = %d\n", uploaded);
+
         if (uploaded != 0)
         {
             continue;
@@ -57,10 +63,10 @@ int uploadDives(SecureDigital sd)
         }
         log_i("BDD ID = %i\n\n", bddID);
 
-        // error during metadata upload
         if (bddID < 0)
         {
             error = true;
+            log_e("Error during metadata upload");
         }
         else
         {
@@ -129,7 +135,7 @@ int uploadDives(SecureDigital sd)
         }
     }
 
-    return 1;
+    return error;
 }
 
 unsigned long postMetadata(String data)
@@ -248,11 +254,17 @@ void startPortal(SecureDigital sd)
     log_v("Wifi connected, start upload dives");
 
     if (uploadDives(sd) != SUCCESS)
+    {
         error = true;
+        log_e("Error after upload");
+    }
 
     log_v("Upload finished, start OTA");
     if (ota(sd) != SUCCESS)
+    {
         error = true;
+        log_e("Error after OTA");
+    }
 
     pinMode(GPIO_LED1, OUTPUT);
     digitalWrite(GPIO_LED1, error);
