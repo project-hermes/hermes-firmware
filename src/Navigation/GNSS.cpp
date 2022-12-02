@@ -2,7 +2,7 @@
 
 GNSS::GNSS()
 {
-parse();
+    parse();
 }
 
 lat GNSS::getLat()
@@ -39,7 +39,7 @@ void GNSS::parse()
     double temp = temperatureSensor.getTemp();
     double depth = depthSensor.getDepth();
 
-    while (millis() < start + TIME_GPS * 1000 && !gpsOK && !timeOK && depth < MAX_DEPTH_CHECK_WATER)
+    while (millis() < start + TIME_GPS * 1000 && (!gpsOK || !timeOK) && depth < MAX_DEPTH_CHECK_WATER)
     {
         if (GPSSerial.available() > 0 && gps.encode(GPSSerial.read()))
         {
