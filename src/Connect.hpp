@@ -35,7 +35,7 @@ int ota(SecureDigital sd);
 /// @brief post dive metadatas
 /// @param data json content
 /// @return
-unsigned long postMetadata(String data);
+long postMetadata(String data);
 
 /// @brief post dive record data
 /// @param data json content
@@ -47,7 +47,7 @@ int postRecordData(String data, unsigned long id);
 /// @param diveID ID return by database after post metadata
 /// @return updated string
 String updateId(String data, unsigned long bddID);
-unsigned long checkId(String data);
+long checkId(String data);
 int putEndTransfer(unsigned long bddID);
 
 const int jsonSize = 27000;

@@ -2,7 +2,7 @@
 
 int uploadDives(SecureDigital sd)
 {
-    unsigned long bddID = 0, siloID = 0;
+    long bddID = 0, siloID = 0;
     bool error = false;
     int count = 0;
     bool postOK = false;
@@ -45,6 +45,19 @@ int uploadDives(SecureDigital sd)
         // check if metadata already uploaded
         bddID = 0;
         bddID = checkId(metadata);
+        log_d("BDD ID = %d", bddID);
+        /// /// Can be removed after beta tests //////
+        if (bddID > 1000000000 || bddID < 0) // if bug in metadata bddid
+        {
+            DynamicJsonDocument dataJson(jsonSize);
+            deserializeJson(dataJson, metadata);
+            dataJson.remove("id");
+            metadata = "";
+            serializeJson(dataJson, metadata);
+            bddID = 0;
+            Serial.print("NEW METADTA"), Serial.println(metadata);
+        }
+        ////////////////////////////////////////
 
         // if not, post metadata and get new id
         if (bddID == 0)
@@ -138,9 +151,9 @@ int uploadDives(SecureDigital sd)
     return error;
 }
 
-unsigned long postMetadata(String data)
+long postMetadata(String data)
 {
-    unsigned long id = 0;
+    long id = 0;
     if ((WiFi.status() == WL_CONNECTED))
     {
 
@@ -159,7 +172,12 @@ unsigned long postMetadata(String data)
         log_d("HTTP RETURN = %d", code);
 
         if (code != 200)
-            return -3;
+        {
+            Serial.print("HTTP Response code: ");
+            String payload = http.getString();
+            Serial.println(payload);
+                        return -3;
+        }
         else
         {
             String response = http.getString().c_str();
@@ -402,7 +420,7 @@ String updateId(String data, unsigned long bddID)
     return returnJson;
 }
 
-unsigned long checkId(String data)
+long checkId(String data)
 {
     unsigned long id = 0;
     DynamicJsonDocument dataJson(jsonSize);
