@@ -9,6 +9,11 @@
 #include <Hal/remora-hal.h>
 #include <Types.hpp>
 
+#include <Wire.h>
+#include <hal/TSYS01.hpp>
+#include <hal/MS5837.hpp>
+#include <Settings.hpp>
+
 class GNSS : public Navigation
 {
 public:

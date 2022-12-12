@@ -47,7 +47,13 @@ public:
         }
         uint64_t cardSize = SD.cardSize() / (1024 * 1024);
         log_i("SD Card Size: %lluMB\n", cardSize);
+        m_ready = true;
     };
+
+    bool ready(void)
+    {
+        return m_ready;
+    }
 
     int makeDirectory(String path)
     {
@@ -181,6 +187,9 @@ public:
             return 1;
         }
     }
+
+private:
+    bool m_ready = false;
 };
 
 #endif
