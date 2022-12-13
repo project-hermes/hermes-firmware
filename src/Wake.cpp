@@ -83,6 +83,7 @@ void wake()
                 else if (i == GPIO_VCC_SENSE) // wifi config
                 {
                     log_d("Wake up gpio vcc sense");
+                    dynamicDive();
 
                     // While wifi not set, shutdown if usb is disconnected
                     attachInterrupt(GPIO_VCC_SENSE, ISR, FALLING);
@@ -121,8 +122,19 @@ void dynamicDive()
 
     bool led_on = false;
 
-    if (d.Start(now(), gps.getLat(), gps.getLng(), TIME_DYNAMIC_MODE, diveMode) == "")
-    {
+    unsigned long startTime = millis();
+
+    // Init struct for recording during gps research
+    int len = TIME_GPS / (TIME_GPS_RECORDS / 1000);
+    struct Record gpsRecords[len + 1];
+    for (int x = 0; x < len; x++)
+        gpsRecords[x] = {-1000, 0, 0};
+
+    // get gps position, dateTime and records.
+    Position pos = gps.parseRecord(gpsRecords);
+
+    if (d.Start(pos.dateTime, pos.Lat, pos.Lng, TIME_DYNAMIC_MODE, diveMode) == "")
+    { // blink if error
         pinMode(GPIO_LED1, OUTPUT);
         for (int i = 0; i < 3; i++)
         {
@@ -134,12 +146,20 @@ void dynamicDive()
     }
     else
     {
+
+        // save records from gps search
+        for (int i = 0; i < len; i++)
+        {
+            if (gpsRecords[i].Temp > -100)
+                d.NewRecord(gpsRecords[i]);
+        }
+
         /* false while depth higher than minDepth */
         bool validDive = false;
         int count = 0;
         double depth, temp;
         long time = 0;
-        unsigned long startTime = millis(), previousTime = 0, currentTime = 0;
+        unsigned long previousTime = 0, currentTime = 0;
 
         // if valid dive, dive end after short time, if dive still not valid, dive end after long time
         while (count < (validDive == true ? MAX_DYNAMIC_COUNTER_VALID_DIVE : MAX_DYNAMIC_COUNTER_NO_DIVE))
@@ -161,7 +181,7 @@ void dynamicDive()
                     {
                         log_d("Valid Dive, reset counter end dive");
                         validDive = true; // if minDepth reached, dive is valid
-                        count = 0; //reset count before detect end of dive
+                        count = 0;        // reset count before detect end of dive
                     }
                 }
 
@@ -198,7 +218,9 @@ void dynamicDive()
         // if dive valid (Pmin reached) get end GPS, else delete records and clean index
         if (validDive)
         {
-            String end = d.End(now(), gps.getLat(), gps.getLng(), diveMode);
+            pos = gps.parse();
+
+            String end = d.End(pos.dateTime, pos.Lat, pos.Lng, diveMode);
             if (end == "")
             {
                 log_e("error ending the dive");

@@ -55,7 +55,6 @@ int uploadDives(SecureDigital sd)
             metadata = "";
             serializeJson(dataJson, metadata);
             bddID = 0;
-            Serial.print("NEW METADTA"), Serial.println(metadata);
         }
         ////////////////////////////////////////
 

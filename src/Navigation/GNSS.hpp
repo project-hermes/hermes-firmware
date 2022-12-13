@@ -13,6 +13,14 @@
 #include <hal/TSYS01.hpp>
 #include <hal/MS5837.hpp>
 #include <Settings.hpp>
+#include <Dive.hpp>
+
+struct Position
+{
+    lat Lat;
+    lng Lng;
+    time_t dateTime;
+};
 
 class GNSS : public Navigation
 {
@@ -21,12 +29,12 @@ public:
 
     lat getLat();
     lng getLng();
+    Position parseRecord(struct Record *records);
+    Position parse();
 
 private:
     HardwareSerial GPSSerial = Serial2;
     TinyGPSPlus gps;
-
-    void parse();
 };
 
 #endif
