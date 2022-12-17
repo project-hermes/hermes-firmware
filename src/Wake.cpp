@@ -83,7 +83,7 @@ void wake()
                 else if (i == GPIO_VCC_SENSE) // wifi config
                 {
                     log_d("Wake up gpio vcc sense");
-
+                    dynamicDive();
                     // While wifi not set, shutdown if usb is disconnected
                     attachInterrupt(GPIO_VCC_SENSE, ISR, FALLING);
 
@@ -161,7 +161,7 @@ void dynamicDive()
                     {
                         log_d("Valid Dive, reset counter end dive");
                         validDive = true; // if minDepth reached, dive is valid
-                        count = 0; //reset count before detect end of dive
+                        count = 0;        // reset count before detect end of dive
                     }
                 }
 
@@ -172,7 +172,8 @@ void dynamicDive()
                     int value = analogRead(GPIO_WATER);
                     if (value < WATER_TRIGGER)
                         count++; // if no water counter++
-                    log_d("Count = %d", count);
+                        
+                    log_d("Count = %d\t Value = %d", count, value);
                     pinMode(GPIO_PROBE, OUTPUT); // set gpio probe pin as low output to avoid corrosion
                     digitalWrite(GPIO_PROBE, LOW);
                 }
