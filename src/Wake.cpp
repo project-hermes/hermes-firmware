@@ -116,6 +116,7 @@ void dynamicDive()
         ms5837 depthSensor = ms5837();
 
         bool led_on = false;
+        bool endDive = false;
 
         if (d.Start(now(), gps.getLat(), gps.getLng(), TIME_DYNAMIC_MODE, diveMode) == "")
         {
@@ -138,7 +139,7 @@ void dynamicDive()
             unsigned long startTime = millis(), previousTime = 0, currentTime = 0;
 
             // if valid dive, dive end after short time, if dive still not valid, dive end after long time
-            while (count < (validDive == true ? MAX_DYNAMIC_COUNTER_VALID_DIVE : MAX_DYNAMIC_COUNTER_NO_DIVE))
+            while (!endDive)
             {
                 currentTime = millis();
                 if (currentTime - previousTime > TIME_DYNAMIC_MODE)
@@ -149,6 +150,8 @@ void dynamicDive()
                     temp = temperatureSensor.getTemp();
                     depth = depthSensor.getDepth();
                     log_i("Temp = %2.2f\t Depth = %3.3f\t Pressure = %4.4f", temp, depth, depthSensor.getPressure());
+
+                    ///////////////// Detect end of dive ////////////////////
 
                     // if dive still not valid, check if depthMin reached
                     if (validDive == false)
@@ -173,6 +176,13 @@ void dynamicDive()
                         pinMode(GPIO_PROBE, OUTPUT); // set gpio probe pin as low output to avoid corrosion
                         digitalWrite(GPIO_PROBE, LOW);
                     }
+
+                    if (count < (validDive == true ? MAX_DYNAMIC_COUNTER_VALID_DIVE : MAX_DYNAMIC_COUNTER_NO_DIVE))
+                    {
+                        if (!detectSurface())
+                            endDive = true;
+                    }
+                    ///////////////// Detect end of dive ////////////////////
 
                     // Save record
                     Record tempRecord = Record{temp, depth, time};
