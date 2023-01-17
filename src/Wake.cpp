@@ -96,7 +96,7 @@ void dynamicDive()
 
     // detect if the wake up is because of diving or not
     // If not, do not start dynamic dive
-    if (detectSurface())
+    if (detectSurface(BEGIN_SURFACE_DETECTION))
     {
         log_d("Dynamic dive");
 
@@ -179,7 +179,7 @@ void dynamicDive()
 
                     if (count < (validDive == true ? MAX_DYNAMIC_COUNTER_VALID_DIVE : MAX_DYNAMIC_COUNTER_NO_DIVE))
                     {
-                        if (!detectSurface())
+                        if (!detectSurface(END_SURFACE_DETECTION))
                             endDive = true;
                     }
                     ///////////////// Detect end of dive ////////////////////
@@ -352,7 +352,7 @@ void selectMode()
     }
 }
 
-bool detectSurface()
+bool detectSurface(float levelSurfaceDetection)
 {
     log_d("START WATER DETECTION");
 
@@ -388,7 +388,7 @@ bool detectSurface()
         count = 0;
     }
 
-    if (avg / (float)avgCount > LEVEL_SURFACE_DETECTION)
+    if (avg / (float)avgCount > levelSurfaceDetection)
         return 1;
     else
         return 0;
