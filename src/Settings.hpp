@@ -7,7 +7,12 @@
 #define LOW_BATT_SLEEP 3
 
 #define FIRMWARE_VERSION 3.21
-// #define MODE_DEBUG
+
+// Debug parameters
+//#define MODE_DEBUG
+#define SERIAL2_DEBUG_OUTPUT
+
+
 
 // Dives parameters
 #define uS_TO_S_FACTOR 1000000            /* Conversion factor for micro seconds to seconds */
