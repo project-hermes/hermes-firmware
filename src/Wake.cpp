@@ -98,7 +98,7 @@ void dynamicDive()
     // If not, do not start dynamic dive
     if (detectSurface(BEGIN_SURFACE_DETECTION))
     {
-        log_d("Dynamic dive");
+        log_d("Dynamic dive 1");
 
         pinMode(GPIO_PROBE, OUTPUT); // set gpio probe pin as low output to avoid corrosion
         digitalWrite(GPIO_PROBE, LOW);
@@ -177,7 +177,7 @@ void dynamicDive()
                         digitalWrite(GPIO_PROBE, LOW);
                     }
 
-                    if (count < (validDive == true ? MAX_DYNAMIC_COUNTER_VALID_DIVE : MAX_DYNAMIC_COUNTER_NO_DIVE))
+                    if (count >= (validDive == true ? MAX_DYNAMIC_COUNTER_VALID_DIVE : MAX_DYNAMIC_COUNTER_NO_DIVE))
                     {
                         if (!detectSurface(END_SURFACE_DETECTION))
                             endDive = true;
