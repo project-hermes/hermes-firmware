@@ -181,6 +181,9 @@ void dynamicDive()
                     {
                         if (!detectSurface(END_SURFACE_DETECTION))
                             endDive = true;
+                        else
+                            count = 0;
+                            
                     }
                     ///////////////// Detect end of dive ////////////////////
 

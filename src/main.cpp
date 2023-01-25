@@ -8,10 +8,10 @@ void setup()
     delay(100);
 
 
-#ifdef SERIAL2_DEBUG_OUTPUT
-    Serial2.begin(115200);
+#ifdef SERIAL1_DEBUG_OUTPUT
+    Serial1.begin(115200);
     delay(100);
-    Serial2.setDebugOutput(true);
+    Serial1.setDebugOutput(true);
 #endif
     wake();
     sleep(DEFAULT_SLEEP);

@@ -10,7 +10,7 @@
 
 // Debug parameters
 #define MODE_DEBUG
-//#define SERIAL2_DEBUG_OUTPUT
+//#define SERIAL1_DEBUG_OUTPUT
 
 // Dives parameters
 #define uS_TO_S_FACTOR 1000000            /* Conversion factor for micro seconds to seconds */
