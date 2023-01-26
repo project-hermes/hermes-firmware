@@ -72,8 +72,7 @@ void wake()
                 else if (i == GPIO_VCC_SENSE) // wifi config
                 {
                     log_d("Wake up gpio vcc sense");
-                    dynamicDive();
-					
+
                     // While wifi not set, shutdown if usb is disconnected
                     attachInterrupt(GPIO_VCC_SENSE, ISR, FALLING);
 
@@ -119,8 +118,19 @@ void dynamicDive()
         bool led_on = false;
         bool endDive = false;
 
-        if (d.Start(now(), gps.getLat(), gps.getLng(), TIME_DYNAMIC_MODE, diveMode) == "")
-        {
+        unsigned long startTime = millis();
+
+        // Init struct for recording during gps research
+        int len = TIME_GPS / (TIME_GPS_RECORDS / 1000);
+        struct Record gpsRecords[len + 1];
+        for (int x = 0; x < len; x++)
+            gpsRecords[x] = {-1000, 0, 0};
+
+        // get gps position, dateTime and records.
+        Position pos = gps.parseRecord(gpsRecords);
+
+        if (d.Start(pos.dateTime, pos.Lat, pos.Lng, TIME_DYNAMIC_MODE, diveMode) == "")
+        { // blink if error
             pinMode(GPIO_LED1, OUTPUT);
             for (int i = 0; i < 3; i++)
             {
@@ -132,12 +142,20 @@ void dynamicDive()
         }
         else
         {
+
+            // save records from gps search
+            for (int i = 0; i < len; i++)
+            {
+                if (gpsRecords[i].Temp > -100)
+                    d.NewRecord(gpsRecords[i]);
+            }
+
             /* false while depth higher than minDepth */
             bool validDive = false;
             int count = 0;
             double depth, temp;
             long time = 0;
-            unsigned long startTime = millis(), previousTime = 0, currentTime = 0;
+            unsigned long previousTime = 0, currentTime = 0;
 
             // if valid dive, dive end after short time, if dive still not valid, dive end after long time
             while (!endDive)
@@ -151,7 +169,6 @@ void dynamicDive()
                     temp = temperatureSensor.getTemp();
                     depth = depthSensor.getDepth();
                     log_i("Temp = %2.2f\t Depth = %3.3f\t Pressure = %4.4f", temp, depth, depthSensor.getPressure());
-
                     ///////////////// Detect end of dive ////////////////////
 
                     // if dive still not valid, check if depthMin reached
@@ -184,7 +201,6 @@ void dynamicDive()
                             endDive = true;
                         else
                             count = 0;
-                            
                     }
                     ///////////////// Detect end of dive ////////////////////
 

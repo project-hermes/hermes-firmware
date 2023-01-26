@@ -9,7 +9,7 @@
 #define FIRMWARE_VERSION 3.21
 
 // Debug parameters
-#define MODE_DEBUG
+//#define MODE_DEBUG
 //#define SERIAL1_DEBUG_OUTPUT
 
 // Dives parameters
