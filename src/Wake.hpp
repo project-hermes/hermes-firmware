@@ -23,6 +23,6 @@ void dynamicDive();
 void startStaticDive();
 void staticDiveWakeUp();
 void selectMode();
-bool detectSurface();
+bool detectSurface(float levelSurfaceDetection);
 
 #endif
