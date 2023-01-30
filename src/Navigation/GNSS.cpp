@@ -39,7 +39,7 @@ Position GNSS::parse()
     ms5837 depthSensor = ms5837();
     double depth = depthSensor.getDepth();
 
-    while (millis() < start + TIME_GPS * 1000 && (!gpsOK || !timeOK) && depth < MAX_DEPTH_CHECK_WATER)
+    while (millis() < start + TIME_GPS * 1000 && (!gpsOK || !timeOK) && depth < MAX_DEPTH_CHECK_GPS)
     {
         if (GPSSerial.available() > 0 && gps.encode(GPSSerial.read()))
         {
@@ -100,7 +100,7 @@ Position GNSS::parseRecord(struct Record *records)
     unsigned long lastRecord = 0;
     int idRecord = 0;
 
-    while (millis() < start + TIME_GPS * 1000 && (!gpsOK || !timeOK) && depth < MAX_DEPTH_CHECK_WATER)
+    while (millis() < start + TIME_GPS * 1000 && (!gpsOK || !timeOK) && depth < MAX_DEPTH_CHECK_GPS)
     {
         if (GPSSerial.available() > 0 && gps.encode(GPSSerial.read()))
         {
