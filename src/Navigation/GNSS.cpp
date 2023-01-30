@@ -17,10 +17,8 @@ lng GNSS::getLng()
     return (lng)gps.location.lng();
 }
 
-Position GNSS::parse()
+void GNSS::parse()
 {
-    Position pos = {0};
-
     digitalWrite(GPIO_LED2, HIGH);
     pinMode(GPIO_GPS_POWER, OUTPUT);
     digitalWrite(GPIO_GPS_POWER, LOW);
@@ -57,15 +55,13 @@ Position GNSS::parse()
                     (uint8_t)gps.date.month(),
                     (uint8_t)(gps.date.year() - 1970)};
                 setTime(makeTime(gpsTime));
-                timeOK = true;
-                pos.dateTime = makeTime(gpsTime);
+                if (year() > 1970)
+                    timeOK = true;
             }
             if (gps.location.isValid())
             {
                 log_v("Position: %f , %f", getLat(), getLng());
                 gpsOK = true;
-                pos.Lat = (lat)gps.location.lat();
-                pos.Lng = (lng)gps.location.lng();
             }
             depth = depthSensor.getDepth();
         }
@@ -118,8 +114,10 @@ Position GNSS::parseRecord(struct Record *records)
                     (uint8_t)gps.date.month(),
                     (uint8_t)(gps.date.year() - 1970)};
                 setTime(makeTime(gpsTime));
-                timeOK = true;
-                pos.dateTime = makeTime(gpsTime);
+                if (year() > 1970)
+                    timeOK = true;
+                pos.dateTime = now();
+                log_v("DateTime: %ld\tNow:%ld", pos.dateTime(), now(););
             }
             if (gps.location.isValid())
             {
