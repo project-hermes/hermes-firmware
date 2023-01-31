@@ -55,7 +55,7 @@ String Dive::Start(long time, lat lat, lng lng, int freq, bool mode)
 
 String Dive::End(long time, lat lat, lng lng, bool mode)
 {
-        //// Write battery level on SD Card only to debug offset  //////////
+    //// Write battery level on SD Card only to debug offset  //////////
     String path = "/" + ID + "/battery.txt";
     storage->appendFile(path, (String)readBattery());
     /////////////////////////////////////////////////////////////
