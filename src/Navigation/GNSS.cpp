@@ -114,10 +114,12 @@ Position GNSS::parseRecord(struct Record *records)
                     (uint8_t)gps.date.month(),
                     (uint8_t)(gps.date.year() - 1970)};
                 setTime(makeTime(gpsTime));
-                if (year() > 1970)
+                if (year() > 1970 && !timeOK )
+                {
                     timeOK = true;
-                pos.dateTime = now();
-                log_v("DateTime: %ld\tNow:%ld", pos.dateTime(), now(););
+                    pos.dateTime = now();
+                    log_d("DateTime: %ld\tNow:%ld", pos.dateTime, now());
+                }
             }
             if (gps.location.isValid())
             {
