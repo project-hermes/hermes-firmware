@@ -104,111 +104,154 @@ void wake()
 
 void dynamicDive()
 {
-    pinMode(GPIO_PROBE, OUTPUT); // set gpio probe pin as low output to avoid corrosion
-    digitalWrite(GPIO_PROBE, LOW);
 
-    pinMode(GPIO_SENSOR_POWER, OUTPUT);
-    digitalWrite(GPIO_SENSOR_POWER, LOW);
-    delay(10);
-    Wire.begin(I2C_SDA, I2C_SCL);
-    delay(10);
-
-    GNSS gps = GNSS();
-    sd = SecureDigital();
-    Dive d(&sd);
-    tsys01 temperatureSensor = tsys01();
-    ms5837 depthSensor = ms5837();
-
-    bool led_on = false;
-
-    if (d.Start(now(), gps.getLat(), gps.getLng(), TIME_DYNAMIC_MODE, diveMode) == "")
+    // detect if the wake up is because of diving or not
+    // If not, do not start dynamic dive
+    if (detectSurface(BEGIN_SURFACE_DETECTION))
     {
-        pinMode(GPIO_LED1, OUTPUT);
-        for (int i = 0; i < 3; i++)
-        {
-            digitalWrite(GPIO_LED1, HIGH);
-            delay(300);
-            digitalWrite(GPIO_LED1, LOW);
-            delay(300);
-        }
-    }
-    else
-    {
-        /* false while depth higher than minDepth */
-        bool validDive = false;
-        int count = 0;
-        double depth, temp;
-        long time = 0;
-        unsigned long startTime = millis(), previousTime = 0, currentTime = 0;
+        log_d("Dynamic dive 1");
 
-        // if valid dive, dive end after short time, if dive still not valid, dive end after long time
-        while (count < (validDive == true ? MAX_DYNAMIC_COUNTER_VALID_DIVE : MAX_DYNAMIC_COUNTER_NO_DIVE))
-        {
-            currentTime = millis();
-            if (currentTime - previousTime > TIME_DYNAMIC_MODE)
+        pinMode(GPIO_PROBE, OUTPUT); // set gpio probe pin as low output to avoid corrosion
+        digitalWrite(GPIO_PROBE, LOW);
+
+        pinMode(GPIO_SENSOR_POWER, OUTPUT);
+        digitalWrite(GPIO_SENSOR_POWER, LOW);
+        delay(10);
+        Wire.begin(I2C_SDA, I2C_SCL);
+        delay(10);
+
+        GNSS gps = GNSS();
+        sd = SecureDigital();
+        Dive d(&sd);
+        tsys01 temperatureSensor = tsys01();
+        ms5837 depthSensor = ms5837();
+
+        bool led_on = false;
+        bool endDive = false;
+
+        unsigned long startTime = millis();
+
+        // Init struct for recording during gps research
+        int len = TIME_GPS / (TIME_GPS_RECORDS / 1000);
+        struct Record gpsRecords[len + 1];
+        for (int x = 0; x < len; x++)
+            gpsRecords[x] = {-1000, 0, 0};
+
+        // get gps position, dateTime and records.
+        Position pos = gps.parseRecord(gpsRecords);
+
+        if (d.Start(pos.dateTime, pos.Lat, pos.Lng, TIME_DYNAMIC_MODE, diveMode) == "")
+        { // blink if error
+            pinMode(GPIO_LED1, OUTPUT);
+            for (int i = 0; i < 3; i++)
             {
-                previousTime = currentTime;
-                time = (previousTime - startTime) / 1000; // get time in seconds since wake up
-
-                temp = temperatureSensor.getTemp();
-                depth = depthSensor.getDepth();
-                log_i("Temp = %2.2f\t Depth = %3.3f\t Pressure = %4.4f", temp, depth, depthSensor.getPressure());
-
-                // if dive still not valid, check if depthMin reached
-                if (validDive == false)
-                {
-                    if (depth > MIN_DEPTH_VALID_DIVE)
-                    {
-                        log_d("Valid Dive, reset counter end dive");
-                        validDive = true; // if minDepth reached, dive is valid
-                        count = 0; //reset count before detect end of dive
-                    }
-                }
-
-                // check water only if depth < MAX DEPTH CHECK WATER
-                if (depth < MAX_DEPTH_CHECK_WATER)
-                {
-                    pinMode(GPIO_PROBE, INPUT); // enable probe pin to allow water detection
-                    int value = analogRead(GPIO_WATER);
-                    if (value < WATER_TRIGGER)
-                        count++; // if no water counter++
-                    log_d("Count = %d", count);
-                    pinMode(GPIO_PROBE, OUTPUT); // set gpio probe pin as low output to avoid corrosion
-                    digitalWrite(GPIO_PROBE, LOW);
-                }
-
-                // Save record
-                Record tempRecord = Record{temp, depth, time};
-                d.NewRecord(tempRecord);
-
-                // blink led
-                if (led_on)
-                    digitalWrite(GPIO_LED4, HIGH);
-                else
-                    digitalWrite(GPIO_LED4, LOW);
-                led_on = !led_on;
-
-                // check battery, back to sleep  witjout water detection if lowBat
-                if (time % TIME_CHECK_BATTERY == 0)
-                    if (readBattery() < LOW_BATTERY_LEVEL)
-                        sleep(LOW_BATT_SLEEP);
-            }
-        }
-
-        // if dive valid (Pmin reached) get end GPS, else delete records and clean index
-        if (validDive)
-        {
-            String end = d.End(now(), gps.getLat(), gps.getLng(), diveMode);
-            if (end == "")
-            {
-                log_e("error ending the dive");
+                digitalWrite(GPIO_LED1, HIGH);
+                delay(300);
+                digitalWrite(GPIO_LED1, LOW);
+                delay(300);
             }
         }
         else
         {
-            d.deleteID(d.getID());
-            log_v("Dive not valid, record deleted");
+
+            // save records from gps search
+            for (int i = 0; i < len; i++)
+            {
+                if (gpsRecords[i].Temp > -100)
+                    d.NewRecord(gpsRecords[i]);
+            }
+
+            /* false while depth higher than minDepth */
+            bool validDive = false;
+            int count = 0;
+            double depth, temp;
+            long time = 0;
+            unsigned long previousTime = 0, currentTime = 0;
+
+            // if valid dive, dive end after short time, if dive still not valid, dive end after long time
+            while (!endDive)
+            {
+                currentTime = millis();
+                if (currentTime - previousTime > TIME_DYNAMIC_MODE)
+                {
+                    previousTime = currentTime;
+                    time = (previousTime - startTime) / 1000; // get time in seconds since wake up
+
+                    temp = temperatureSensor.getTemp();
+                    depth = depthSensor.getDepth();
+                    log_i("Temp = %2.2f\t Depth = %3.3f\t Pressure = %4.4f", temp, depth, depthSensor.getPressure());
+                    ///////////////// Detect end of dive ////////////////////
+
+                    // if dive still not valid, check if depthMin reached
+                    if (validDive == false)
+                    {
+                        if (depth > MIN_DEPTH_VALID_DIVE)
+                        {
+                            log_d("Valid Dive, reset counter end dive");
+                            validDive = true; // if minDepth reached, dive is valid
+                            count = 0;        // reset count before detect end of dive
+                        }
+                    }
+
+                    // check water only if depth < MAX DEPTH CHECK WATER
+                    if (depth < MAX_DEPTH_CHECK_WATER)
+                    {
+                        pinMode(GPIO_PROBE, INPUT); // enable probe pin to allow water detection
+                        int value = analogRead(GPIO_WATER);
+                        if (value < WATER_TRIGGER)
+                            count++; // if no water counter++
+
+                        log_d("Count = %d\t Value = %d", count, value);
+                        pinMode(GPIO_PROBE, OUTPUT); // set gpio probe pin as low output to avoid corrosion
+                        digitalWrite(GPIO_PROBE, LOW);
+                    }
+
+                    if (count >= (validDive == true ? MAX_DYNAMIC_COUNTER_VALID_DIVE : MAX_DYNAMIC_COUNTER_NO_DIVE))
+                    {
+                        if (!detectSurface(END_SURFACE_DETECTION))
+                            endDive = true;
+                        else
+                            count = 0;
+                    }
+                    ///////////////// Detect end of dive ////////////////////
+
+                    // Save record
+                    Record tempRecord = Record{temp, depth, time};
+                    d.NewRecord(tempRecord);
+
+                    // blink led
+                    if (led_on)
+                        digitalWrite(GPIO_LED4, HIGH);
+                    else
+                        digitalWrite(GPIO_LED4, LOW);
+                    led_on = !led_on;
+
+                    // check battery, back to sleep  witjout water detection if lowBat
+                    if (time % TIME_CHECK_BATTERY == 0)
+                        if (readBattery() < LOW_BATTERY_LEVEL)
+                            sleep(LOW_BATT_SLEEP);
+                }
+            }
+
+            // if dive valid (Pmin reached) get end GPS, else delete records and clean index
+            if (validDive)
+            {
+                String end = d.End(now(), gps.getLat(), gps.getLng(), diveMode);
+                if (end == "")
+                {
+                    log_e("error ending the dive");
+                }
+            }
+            else
+            {
+                d.deleteID(d.getID());
+                log_v("Dive not valid, record deleted");
+            }
         }
+    }
+    else
+    {
+        log_d("Surface not detected");
     }
 }
 
@@ -340,7 +383,7 @@ void selectMode()
     }
 }
 
-bool detectSurface()
+bool detectSurface(float levelSurfaceDetection)
 {
     log_d("START WATER DETECTION");
 
@@ -376,7 +419,7 @@ bool detectSurface()
         count = 0;
     }
 
-    if (avg / (float)avgCount > LEVEL_SURFACE_DETECTION)
+    if (avg / (float)avgCount > levelSurfaceDetection)
         return 1;
     else
         return 0;
