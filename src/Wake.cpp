@@ -81,7 +81,11 @@ void wake()
                 else if (i == GPIO_CONFIG) // button config (switch between diving modes)
                 {
                     log_d("Wake up gpio config");
+#ifdef MODE_DEBUG
+                    dynamicDive();
+#else
                     selectMode();
+#endif
                 }
             }
 
@@ -94,9 +98,13 @@ void wake()
 void dynamicDive()
 {
 
-    // detect if the wake up is because of diving or not
-    // If not, do not start dynamic dive
+// detect if the wake up is because of diving or not
+// If not, do not start dynamic dive
+#ifdef MODE_DEBUG
+    if (true)
+#else
     if (detectSurface(BEGIN_SURFACE_DETECTION))
+#endif
     {
         log_d("Dynamic dive 1");
 
@@ -160,7 +168,8 @@ void dynamicDive()
             // if valid dive, dive end after short time, if dive still not valid, dive end after long time
             while (!endDive)
             {
-                currentTime = millis();
+                currentTime = gps.getTime();
+
                 if (currentTime - previousTime > TIME_DYNAMIC_MODE)
                 {
                     previousTime = currentTime;
@@ -168,7 +177,7 @@ void dynamicDive()
 
                     temp = temperatureSensor.getTemp();
                     depth = depthSensor.getDepth();
-                    log_i("Temp = %2.2f\t Depth = %3.3f\t Pressure = %4.4f", temp, depth, depthSensor.getPressure());
+                    // log_i("Temp = %2.2f\t Depth = %3.3f\t Pressure = %4.4f", temp, depth, depthSensor.getPressure());
                     ///////////////// Detect end of dive ////////////////////
 
                     // if dive still not valid, check if depthMin reached
@@ -190,7 +199,7 @@ void dynamicDive()
                         if (value < WATER_TRIGGER)
                             count++; // if no water counter++
 
-                        log_d("Count = %d\t Value = %d", count, value);
+                        // log_d("Count = %d\t Value = %d", count, value);
                         pinMode(GPIO_PROBE, OUTPUT); // set gpio probe pin as low output to avoid corrosion
                         digitalWrite(GPIO_PROBE, LOW);
                     }

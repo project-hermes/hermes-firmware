@@ -1,8 +1,11 @@
 #include <Navigation/GNSS.hpp>
+#include "GNSS.hpp"
 
 GNSS::GNSS()
 {
     // parse();
+    GPSSerial.begin(9600);
+    delay(100);
 }
 
 lat GNSS::getLat()
@@ -36,9 +39,26 @@ void GNSS::parse()
 
     ms5837 depthSensor = ms5837();
     double depth = depthSensor.getDepth();
-
+    /*
+        char nextData;
+        while (1)
+        {
+            while (GPSSerial.available())
+            {
+                nextData = GPSSerial.read();
+                Serial1.write(nextData);
+                if (gps.encode(nextData))
+                {
+                    Serial1.write("\n");
+                    if (gps.time.isUpdated())
+                        log_d("Hour: %d:%d:%d", gps.time.hour(), gps.time.minute(), gps.time.second());
+                }
+            }
+        }
+        */
     while (millis() < start + TIME_GPS * 1000 && (!gpsOK || !timeOK) && depth < MAX_DEPTH_CHECK_GPS)
     {
+
         if (GPSSerial.available() > 0 && gps.encode(GPSSerial.read()))
         {
             if (gps.date.isValid() && gps.time.isValid())
@@ -66,8 +86,47 @@ void GNSS::parse()
             depth = depthSensor.getDepth();
         }
     }
+
     digitalWrite(GPIO_LED2, LOW); // turn syn led off when gps connected
     log_d("GPS OK");
+}
+time_t GNSS::getTime()
+{
+    struct tm tm;  // tm struct to store date time from gps
+    char nextData; // char received from gps
+    bool timeReady = false;
+
+    pinMode(GPIO_GPS_POWER, OUTPUT);
+    digitalWrite(GPIO_GPS_POWER, LOW);
+
+    while (timeReady == false)
+    {
+        while (GPSSerial.available())
+        {
+            nextData = GPSSerial.read();
+            // Serial1.write(nextData);
+            if (gps.encode(nextData))
+            {
+                // Serial1.write("\n");
+
+                if (gps.time.isUpdated() && gps.date.isUpdated())
+                {
+                    tm.tm_hour = gps.time.hour();
+                    tm.tm_min = gps.time.minute();
+                    tm.tm_sec = gps.time.second();
+                    tm.tm_year = gps.date.year() - 1900;
+                    tm.tm_mon = gps.date.month() - 1;
+                    tm.tm_mday = gps.date.day();
+
+                    timeReady = true;
+                }
+            }
+        }
+    }
+
+    log_v("Date: %d-%d-%d\t Time : %d:%d:%d", gps.date.year(), gps.date.month(), gps.date.day(), gps.time.hour(), gps.time.minute(), gps.time.second());
+
+    return mktime(&tm); // return time and date from gps converted into timestamp
 }
 
 Position GNSS::parseRecord(struct Record *records)
@@ -114,11 +173,9 @@ Position GNSS::parseRecord(struct Record *records)
                     (uint8_t)gps.date.month(),
                     (uint8_t)(gps.date.year() - 1970)};
                 setTime(makeTime(gpsTime));
-                if (year() > 1970 && !timeOK )
+                if (year() > 1970 && !timeOK)
                 {
                     timeOK = true;
-                    pos.dateTime = now();
-                    log_d("DateTime: %ld\tNow:%ld", pos.dateTime, now());
                 }
             }
             if (gps.location.isValid())
@@ -142,7 +199,9 @@ Position GNSS::parseRecord(struct Record *records)
             }
         }
     }
-    digitalWrite(GPIO_LED2, LOW); // turn syn led off when gps connected
+    digitalWrite(GPIO_LED2, LOW);                              // turn syn led off when gps connected
+    pos.dateTime = now() - idRecord * TIME_GPS_RECORDS / 1000; // start datetime is the before the gps search so we remove the duration of the gps search.
+    log_d("DateTime: %ld\tNow:%ld", pos.dateTime, now());
 
     return pos;
 }
