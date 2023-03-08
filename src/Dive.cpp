@@ -38,8 +38,6 @@ String Dive::Start(long time, lat lat, lng lng, int freq, bool mode)
     ID = createID(time);
     saveId(ID);
 
-
-
     diveRecords = new Record[siloRecordSize];
     if (writeMetadataStart(time, lat, lng, freq, mode) == -1)
     {
@@ -48,14 +46,14 @@ String Dive::Start(long time, lat lat, lng lng, int freq, bool mode)
     createIndex();
     //// Write battery level on SD Card only to debug offset  //////////
     String path = "/" + ID + "/battery.txt";
-    storage->writeFile(path, (String)readBattery()+"\n");
+    storage->writeFile(path, (String)readBattery() + "\n");
     /////////////////////////////////////////////////////////////
     return ID;
 }
 
 String Dive::End(long time, lat lat, lng lng, bool mode)
 {
-        //// Write battery level on SD Card only to debug offset  //////////
+    //// Write battery level on SD Card only to debug offset  //////////
     String path = "/" + ID + "/battery.txt";
     storage->appendFile(path, (String)readBattery());
     /////////////////////////////////////////////////////////////
@@ -72,7 +70,7 @@ String Dive::End(long time, lat lat, lng lng, bool mode)
 
 int Dive::NewRecord(Record r)
 {
-    log_d("%d :\tTime=%d\tTemp=%2.3f\t Depth=%2.3f", currentRecords, r.Time, r.Temp, r.Depth);
+    log_d("%d :\tTime=%ld\tTemp=%2.3f\t Depth=%2.3f", currentRecords, r.Time, r.Temp, r.Depth);
 
     diveRecords[currentRecords] = r;
     currentRecords++;
@@ -365,6 +363,9 @@ void Dive::deleteID(String ID)
 
     pathRecords = "/" + ID + "/metadata.json";
     storage->deleteFile(pathRecords); // delete metadata file
+
+    pathRecords = "/" + ID + "/battery.txt";
+    storage->deleteFile(pathRecords); // delete battery file
 
     String path = "/" + ID;
     storage->removeDirectory(path); // remove directory

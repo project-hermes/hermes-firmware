@@ -152,8 +152,11 @@ Position GNSS::parseRecord(struct Record *records)
     double temp = temperatureSensor.getTemp();
     double depth = depthSensor.getDepth();
 
-    unsigned long lastRecord = 0;
+    unsigned long previousTime = 0, currentTime = 0;
     int idRecord = 0;
+    int count = 0;
+
+    currentTime = getTime(); // Init Current TIme
 
     while (millis() < start + TIME_GPS * 1000 && (!gpsOK || !timeOK) && depth < MAX_DEPTH_CHECK_GPS)
     {
@@ -186,21 +189,29 @@ Position GNSS::parseRecord(struct Record *records)
                 pos.Lng = (lng)gps.location.lng();
             }
             depth = depthSensor.getDepth();
-            if (millis() - lastRecord >= TIME_GPS_RECORDS)
+            currentTime = getTime();
+
+            if (currentTime != previousTime) // check if second change
             {
-                lastRecord = millis();
+                count++;
+                previousTime = currentTime; //reset previous time
+            }
+
+            if (count >= TIME_GPS_RECORDS) // if new records required
+            {
+                count = 0;
 
                 // save temp and depth
                 temp = temperatureSensor.getTemp();
                 records[idRecord].Depth = depth;
                 records[idRecord].Temp = temp;
-                records[idRecord].Time = (millis() - start) / 1000;
+                records[idRecord].Time = (idRecord + 1) * TIME_GPS_RECORDS;
                 idRecord++;
             }
         }
     }
     digitalWrite(GPIO_LED2, LOW);                              // turn syn led off when gps connected
-    pos.dateTime = now() - idRecord * TIME_GPS_RECORDS / 1000; // start datetime is the before the gps search so we remove the duration of the gps search.
+    pos.dateTime = now() - idRecord * TIME_GPS_RECORDS; // start datetime is the before the gps search so we remove the duration of the gps search.
     log_d("DateTime: %ld\tNow:%ld", pos.dateTime, now());
 
     return pos;

@@ -126,16 +126,16 @@ void dynamicDive()
         bool led_on = false;
         bool endDive = false;
 
-        unsigned long startTime = millis();
 
         // Init struct for recording during gps research
-        int len = TIME_GPS / (TIME_GPS_RECORDS / 1000);
+        int len = TIME_GPS / (TIME_GPS_RECORDS);
         struct Record gpsRecords[len + 1];
         for (int x = 0; x < len; x++)
             gpsRecords[x] = {-1000, 0, 0};
 
         // get gps position, dateTime and records.
         Position pos = gps.parseRecord(gpsRecords);
+        unsigned long startTime = pos.dateTime;
 
         if (d.Start(pos.dateTime, pos.Lat, pos.Lng, TIME_DYNAMIC_MODE, diveMode) == "")
         { // blink if error
@@ -162,18 +162,20 @@ void dynamicDive()
             bool validDive = false;
             int count = 0;
             double depth, temp;
-            long time = 0;
+            unsigned long time = 0;
             unsigned long previousTime = 0, currentTime = 0;
 
             // if valid dive, dive end after short time, if dive still not valid, dive end after long time
             while (!endDive)
             {
                 currentTime = gps.getTime();
+                log_d("Current Time : %d\t StartTime : %d", currentTime, startTime);
 
-                if (currentTime - previousTime > TIME_DYNAMIC_MODE)
+                if (currentTime - previousTime >= TIME_DYNAMIC_MODE)
                 {
                     previousTime = currentTime;
-                    time = (previousTime - startTime) / 1000; // get time in seconds since wake up
+                   // time = (previousTime - startTime) / 1000; // get time in seconds since wake up
+                    time = (previousTime - startTime); // get time in seconds since wake up
 
                     temp = temperatureSensor.getTemp();
                     depth = depthSensor.getDepth();
