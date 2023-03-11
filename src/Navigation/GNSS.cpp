@@ -39,23 +39,7 @@ void GNSS::parse()
 
     ms5837 depthSensor = ms5837();
     double depth = depthSensor.getDepth();
-    /*
-        char nextData;
-        while (1)
-        {
-            while (GPSSerial.available())
-            {
-                nextData = GPSSerial.read();
-                Serial1.write(nextData);
-                if (gps.encode(nextData))
-                {
-                    Serial1.write("\n");
-                    if (gps.time.isUpdated())
-                        log_d("Hour: %d:%d:%d", gps.time.hour(), gps.time.minute(), gps.time.second());
-                }
-            }
-        }
-        */
+
     while (millis() < start + TIME_GPS * 1000 && (!gpsOK || !timeOK) && depth < MAX_DEPTH_CHECK_GPS)
     {
 
@@ -191,7 +175,7 @@ Position GNSS::parseRecord(struct Record *records)
             depth = depthSensor.getDepth();
             currentTime = getTime();
 
-            if (currentTime != previousTime) // check if second change
+            if (currentTime != previousTime) // check if time changed
             {
                 count++;
                 previousTime = currentTime; //reset previous time
