@@ -265,7 +265,7 @@ void startPortal(SecureDigital sd)
     // detach interrupt to keep remora alive during upload and ota process even if usb is disconnected
     detachInterrupt(GPIO_VCC_SENSE);
 
-    pinMode(GPIO_LED1, OUTPUT);
+    pinMode(GPIO_LED2, OUTPUT);
     digitalWrite(GPIO_LED2, HIGH);
 
     log_v("Wifi connected, start upload dives");
