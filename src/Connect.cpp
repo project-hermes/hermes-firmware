@@ -175,7 +175,7 @@ long postMetadata(String data)
             Serial.print("HTTP Response code: ");
             String payload = http.getString();
             Serial.println(payload);
-                        return -3;
+            return -3;
         }
         else
         {
@@ -242,9 +242,9 @@ void startPortal(SecureDigital sd)
 
     log_v("starting config portal...");
 
-    AutoConnectConfig acConfig("Remora Config", "cousteau");
-    // acConfig.hostName = String("remora");
-    // acConfig.homeUri = "https://www.google.fr";
+    AutoConnectConfig acConfig("Remora Config", "cousteau", 0, AUTOCONNECT_AP_CH);
+    acConfig.hostName = String("Remora");
+    acConfig.homeUri = "/";
     acConfig.autoReconnect = true;
     acConfig.autoReset = false;
     acConfig.portalTimeout = 15 * 60 * 1000;
@@ -252,6 +252,9 @@ void startPortal(SecureDigital sd)
     acConfig.ticker = true;
     acConfig.tickerPort = GPIO_LED3;
     acConfig.tickerOn = LOW;
+    acConfig.menuItems = acConfig.menuItems | AC_MENUITEM_DEVINFO;
+    acConfig.menuItems = acConfig.menuItems | AC_MENUITEM_DELETESSID;
+
     Portal.config(acConfig);
     Portal.begin();
     bool error = false;
