@@ -25,7 +25,6 @@ void wake()
     pinMode(GPIO_LED3, OUTPUT);
     pinMode(GPIO_LED4, OUTPUT);
     pinMode(GPIO_WATER, INPUT);
-    pinMode(GPIO_PROBE, INPUT);
     pinMode(GPIO_VBATT, INPUT);
     digitalWrite(GPIO_LED3, LOW);
     digitalWrite(GPIO_LED4, LOW);
@@ -94,14 +93,14 @@ void wake()
 void dynamicDive()
 {
 
+    pinMode(GPIO_PROBE, OUTPUT); // set gpio probe pin as low output to avoid corrosion
+    digitalWrite(GPIO_PROBE, LOW);
+
     // detect if the wake up is because of diving or not
     // If not, do not start dynamic dive
     if (detectSurface(BEGIN_SURFACE_DETECTION))
     {
         log_d("Dynamic dive 1");
-
-        pinMode(GPIO_PROBE, OUTPUT); // set gpio probe pin as low output to avoid corrosion
-        digitalWrite(GPIO_PROBE, LOW);
 
         pinMode(GPIO_SENSOR_POWER, OUTPUT);
         digitalWrite(GPIO_SENSOR_POWER, LOW);
