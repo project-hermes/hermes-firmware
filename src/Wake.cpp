@@ -24,13 +24,14 @@ void wake()
     pinMode(GPIO_LED2, OUTPUT);
     pinMode(GPIO_LED3, OUTPUT);
     pinMode(GPIO_LED4, OUTPUT);
-    pinMode(GPIO_WATER, INPUT);
     pinMode(GPIO_VBATT, INPUT);
     digitalWrite(GPIO_LED3, LOW);
     digitalWrite(GPIO_LED4, LOW);
 
     pinMode(GPIO_PROBE, OUTPUT); // set gpio probe pin as low output to avoid corrosion
     digitalWrite(GPIO_PROBE, LOW);
+    pinMode(GPIO_WATER, OUTPUT);
+    digitalWrite(GPIO_WATER, LOW);
 
     // check if sd card is ready, if not go back to sleep without water detection wake up
     if (sd.ready() == false)
@@ -185,6 +186,7 @@ void dynamicDive()
                     if (depth < MAX_DEPTH_CHECK_WATER)
                     {
                         pinMode(GPIO_PROBE, INPUT); // enable probe pin to allow water detection
+                        pinMode(GPIO_WATER, INPUT);
                         int value = analogRead(GPIO_WATER);
                         if (value < WATER_TRIGGER)
                             count++; // if no water counter++
@@ -192,6 +194,8 @@ void dynamicDive()
                         log_d("Count = %d\t Value = %d", count, value);
                         pinMode(GPIO_PROBE, OUTPUT); // set gpio probe pin as low output to avoid corrosion
                         digitalWrite(GPIO_PROBE, LOW);
+                        pinMode(GPIO_WATER, OUTPUT);
+                        digitalWrite(GPIO_WATER, LOW);
                     }
 
                     if (count >= (validDive == true ? MAX_DYNAMIC_COUNTER_VALID_DIVE : MAX_DYNAMIC_COUNTER_NO_DIVE))
@@ -312,6 +316,7 @@ void staticDiveWakeUp()
     if (depth < MAX_DEPTH_CHECK_WATER)
     {
         pinMode(GPIO_PROBE, INPUT); // enable probe pin to allow water detection
+        pinMode(GPIO_WATER, INPUT);
         int value;
 
         value = analogRead(GPIO_WATER);
@@ -323,6 +328,8 @@ void staticDiveWakeUp()
             staticCount++;           // if no water counter++
         pinMode(GPIO_PROBE, OUTPUT); // set gpio probe pin as low output to avoid corrosion
         digitalWrite(GPIO_PROBE, LOW);
+        pinMode(GPIO_WATER, OUTPUT);
+        digitalWrite(GPIO_WATER, LOW);
     }
 
     Record tempRecord = Record{temp, depth, staticTime};
