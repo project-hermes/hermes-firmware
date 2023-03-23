@@ -154,7 +154,7 @@ void dynamicDive()
 
             /* false while depth higher than minDepth */
             bool validDive = false;
-            int count = 0;
+            int count = 0, countCheckWater = 0;
             double depth, temp;
             long time = 0;
             unsigned long previousTime = 0, currentTime = 0;
@@ -185,8 +185,9 @@ void dynamicDive()
                     }
 
                     // check water only if depth < MAX DEPTH CHECK WATER
-                    if (depth < MAX_DEPTH_CHECK_WATER)
+                    if (depth < MAX_DEPTH_CHECK_WATER && countCheckWater == DELAY_CHECK_WATER)
                     {
+                        countCheckWater = 0;
                         pinMode(GPIO_PROBE, INPUT); // enable probe pin to allow water detection
                         pinMode(GPIO_WATER, INPUT);
                         int value = analogRead(GPIO_WATER);
@@ -198,6 +199,10 @@ void dynamicDive()
                         digitalWrite(GPIO_PROBE, LOW);
                         pinMode(GPIO_WATER, OUTPUT);
                         digitalWrite(GPIO_WATER, LOW);
+                    }
+                    else
+                    {
+                        countCheckWater++;
                     }
 
                     if (count >= (validDive == true ? MAX_DYNAMIC_COUNTER_VALID_DIVE : MAX_DYNAMIC_COUNTER_NO_DIVE))
