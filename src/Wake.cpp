@@ -96,6 +96,8 @@ void dynamicDive()
 
     pinMode(GPIO_PROBE, OUTPUT); // set gpio probe pin as low output to avoid corrosion
     digitalWrite(GPIO_PROBE, LOW);
+    pinMode(GPIO_WATER, OUTPUT);
+    digitalWrite(GPIO_WATER, LOW);
 
     // detect if the wake up is because of diving or not
     // If not, do not start dynamic dive
