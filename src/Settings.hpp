@@ -32,6 +32,7 @@
 #define TIME_CHECK_BATTERY 60            // Time between 2 battery ccheck during dynamic dive. (seconds)
 #define LOW_BATTERY_LEVEL 3.3            //  If vBat < Low battery level, go back to sleep without water detection wakeup (Volts)
 #define DELAY_CHECK_WATER 30             // Delay between each check of water pin, to avoid corrosion
+#define TIME_UPLOAD_OTA 1800             // Time between 2 upload and OTA check (seconds)
 
 // Upload parameters
 const String indexPath = "/index.json";
