@@ -185,7 +185,7 @@ void dynamicDive()
                     }
 
                     // check water only if depth < MAX DEPTH CHECK WATER
-                    if (depth < MAX_DEPTH_CHECK_WATER && countCheckWater == DELAY_CHECK_WATER)
+                    if (depth < MAX_DEPTH_CHECK_WATER && countCheckWater >= DELAY_CHECK_WATER)
                     {
                         countCheckWater = 0;
                         pinMode(GPIO_PROBE, INPUT); // enable probe pin to allow water detection
@@ -204,6 +204,7 @@ void dynamicDive()
                     {
                         countCheckWater++;
                     }
+                        log_d("Count check water = %d", countCheckWater);
 
                     if (count >= (validDive == true ? MAX_DYNAMIC_COUNTER_VALID_DIVE : MAX_DYNAMIC_COUNTER_NO_DIVE))
                     {
