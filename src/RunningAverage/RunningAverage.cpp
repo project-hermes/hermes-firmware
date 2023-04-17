@@ -19,7 +19,7 @@
 // Released to the public domain
 //
 
-#include "RunningAverage.h"
+#include "RunningAverage.hpp"
 #include <stdlib.h>
 
 RunningAverage::RunningAverage(int n)
