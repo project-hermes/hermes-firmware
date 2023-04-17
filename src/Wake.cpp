@@ -132,19 +132,7 @@ void dynamicDive()
         Position pos = gps.parseRecord(gpsRecords);
 
         if (d.Start(pos.dateTime, pos.Lat, pos.Lng, TIME_DYNAMIC_MODE, diveMode) == "")
-        { // blink if error
-            pinMode(GPIO_LED1, OUTPUT);
-            for (int i = 0; i < 3; i++)
-            {
-                digitalWrite(GPIO_LED1, HIGH);
-                delay(300);
-                digitalWrite(GPIO_LED1, LOW);
-                delay(300);
-            }
-        }
-        else
         {
-
             // save records from gps search
             for (int i = 0; i < len; i++)
             {
@@ -204,7 +192,7 @@ void dynamicDive()
                     {
                         countCheckWater++;
                     }
-                        log_d("Count check water = %d", countCheckWater);
+                    log_d("Count check water = %d", countCheckWater);
 
                     if (count >= (validDive == true ? MAX_DYNAMIC_COUNTER_VALID_DIVE : MAX_DYNAMIC_COUNTER_NO_DIVE))
                     {
@@ -270,18 +258,7 @@ void startStaticDive()
 
     staticCount = 0;
 
-    if (staticDive.Start(now(), gps.getLat(), gps.getLng(), TIME_TO_SLEEP_STATIC, diveMode) == "")
-    {
-        pinMode(GPIO_LED1, OUTPUT);
-        for (int i = 0; i < 3; i++)
-        {
-            digitalWrite(GPIO_LED1, HIGH);
-            delay(300);
-            digitalWrite(GPIO_LED1, LOW);
-            delay(300);
-        }
-    }
-    else
+    if (staticDive.Start(now(), gps.getLat(), gps.getLng(), TIME_TO_SLEEP_STATIC, diveMode) != "")
     {
         pinMode(GPIO_LED4, OUTPUT);
         for (int i = 0; i < 3; i++)
