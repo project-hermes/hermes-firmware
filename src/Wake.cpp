@@ -156,7 +156,7 @@ void dynamicDive()
 
             /* false while depth higher than minDepth */
             bool validDive = false;
-            int count = 0, countCheckWater = 0;
+            int count = 0;
             double depth, temp;
             long time = 0;
             unsigned long previousTime = 0, currentTime = 0;
@@ -172,7 +172,7 @@ void dynamicDive()
 
                     temp = temperatureSensor.getTemp();
                     depth = depthSensor.getDepth();
-                    log_i("Temp = %2.2f\t Depth = %3.3f\t Pressure = %4.4f", temp, depth, depthSensor.getPressure());
+                    //log_i("Temp = %2.2f\t Depth = %3.3f\t Pressure = %4.4f", temp, depth, depthSensor.getPressure());
 
                     // if dive still not valid, check if depthMin reached
                     if (validDive == false)
@@ -203,7 +203,6 @@ void dynamicDive()
 
                     /////////////////// Depth Running Amplitude & average to detect end of dive/////////////
                     depthRAvg.addValue(depth);
-                    log_i("Amplitude : %3.3f\tAverage : %3.3f", depthRAvg.getAmplitude(), depthRAvg.getAverage());
 
                     // if avg depth is low (near surface), check depth amplitude to detect end of dive.
                     if (depthRAvg.getAverage() < MIN_DEPTH_CHECK_AMPLITUDE)
@@ -213,6 +212,7 @@ void dynamicDive()
                             count++;
                         else
                             count = 0;
+                        log_i("Amplitude : %3.3f\tAverage : %3.3f\tCount : %d", depthRAvg.getAmplitude(), depthRAvg.getAverage(),count);
                     }
                     else
                     {

@@ -25,7 +25,7 @@
 #define MAX_DYNAMIC_COUNTER_NO_DIVE 600  /* Number of No Water to end dynamic dive (TIME_DYNAMIC_MODE / 1000 * MAX_DYNAMIC_COUNTER = seconds)*/
 #define MAX_STATIC_COUNTER 2             /* Number of No Water to end static dive (TIME_TO_SLEEP_STATIC * MAX_STATIC_COUNTER = seconds )*/
 #define WATER_TRIGGER 1500               // mV water detection level (0 to 3300) (lower value for pure water)
-#define TIME_GPS 300                     // research time gps (seconds)
+#define TIME_GPS 5                     // research time gps (seconds)
 #define TIME_SURFACE_DETECTION 5         // Time to detect surface crossing at the beginning of the dive (seconds)
 #define BEGIN_SURFACE_DETECTION 0.02     // depth max-min to detect surface crossing at the beggining of the dive
 #define END_SURFACE_DETECTION 0.02       // depth max-min to detect surface crossing at the end of the dive
