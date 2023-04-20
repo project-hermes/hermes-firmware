@@ -257,7 +257,6 @@ void startPortal(SecureDigital sd)
 
     Portal.config(acConfig);
     Portal.begin();
-    bool error = false;
     long previous = -1000000000;
 
     while (WiFi.status() == WL_DISCONNECTED)
@@ -280,17 +279,11 @@ void startPortal(SecureDigital sd)
             digitalWrite(GPIO_LED2, HIGH);
 
             if (uploadDives(sd) != SUCCESS)
-            {
-                error = true;
                 log_e("Error after upload");
-            }
 
             log_v("Upload finished, start OTA");
             if (ota(sd) != SUCCESS)
-            {
-                error = true;
                 log_e("Error after OTA");
-            }
 
             digitalWrite(GPIO_LED2, LOW);
             log_v("OTA finished, waiting for usb disconnection");
