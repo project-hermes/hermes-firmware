@@ -285,8 +285,6 @@ void startPortal(SecureDigital sd)
             if (ota(sd) != SUCCESS)
                 log_e("Error after OTA");
 
-            pinMode(GPIO_LED1, OUTPUT);
-            digitalWrite(GPIO_LED1, error);
             digitalWrite(GPIO_LED2, LOW);
             log_v("OTA finished, waiting for usb disconnection");
 

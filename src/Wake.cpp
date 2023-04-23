@@ -133,18 +133,7 @@ void dynamicDive()
         // get gps position, dateTime and records.
         Position pos = gps.parseRecord(gpsRecords);
 
-        if (d.Start(pos.dateTime, pos.Lat, pos.Lng, TIME_DYNAMIC_MODE, diveMode) == "")
-        { // blink if error
-            pinMode(GPIO_LED1, OUTPUT);
-            for (int i = 0; i < 3; i++)
-            {
-                digitalWrite(GPIO_LED1, HIGH);
-                delay(300);
-                digitalWrite(GPIO_LED1, LOW);
-                delay(300);
-            }
-        }
-        else
+        if (d.Start(pos.dateTime, pos.Lat, pos.Lng, TIME_DYNAMIC_MODE, diveMode) != "")
         {
 
             // save records from gps search
@@ -172,7 +161,7 @@ void dynamicDive()
 
                     temp = temperatureSensor.getTemp();
                     depth = depthSensor.getDepth();
-                    //log_i("Temp = %2.2f\t Depth = %3.3f\t Pressure = %4.4f", temp, depth, depthSensor.getPressure());
+                    // log_i("Temp = %2.2f\t Depth = %3.3f\t Pressure = %4.4f", temp, depth, depthSensor.getPressure());
 
                     // if dive still not valid, check if depthMin reached
                     if (validDive == false)
@@ -212,7 +201,7 @@ void dynamicDive()
                             count++;
                         else
                             count = 0;
-                        log_i("Amplitude : %3.3f\tAverage : %3.3f\tCount : %d", depthRAvg.getAmplitude(), depthRAvg.getAverage(),count);
+                        log_i("Amplitude : %3.3f\tAverage : %3.3f\tCount : %d", depthRAvg.getAmplitude(), depthRAvg.getAverage(), count);
                     }
                     else
                     {
@@ -265,18 +254,7 @@ void startStaticDive()
 
     staticCount = 0;
 
-    if (staticDive.Start(now(), gps.getLat(), gps.getLng(), TIME_TO_SLEEP_STATIC, diveMode) == "")
-    {
-        pinMode(GPIO_LED1, OUTPUT);
-        for (int i = 0; i < 3; i++)
-        {
-            digitalWrite(GPIO_LED1, HIGH);
-            delay(300);
-            digitalWrite(GPIO_LED1, LOW);
-            delay(300);
-        }
-    }
-    else
+    if (staticDive.Start(now(), gps.getLat(), gps.getLng(), TIME_TO_SLEEP_STATIC, diveMode) != "")
     {
         pinMode(GPIO_LED4, OUTPUT);
         for (int i = 0; i < 3; i++)

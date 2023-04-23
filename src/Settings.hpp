@@ -6,10 +6,10 @@
 #define SDCARD_ERROR_SLEEP 2
 #define LOW_BATT_SLEEP 3
 
-#define FIRMWARE_VERSION 3.5
+#define FIRMWARE_VERSION 3.51
 
 // Debug parameters
- #define MODE_DEBUG
+// #define MODE_DEBUG
 // #define SERIAL1_DEBUG_OUTPUT
 
 // Dives parameters
