@@ -122,8 +122,8 @@ void dynamicDive()
 
         unsigned long startTime = millis();
 
-        // Init struct for recording during gps research
-        int len = TIME_GPS / (TIME_GPS_RECORDS / 1000);
+        // Init struct for recording during start gps research
+        int len = TIME_GPS_START / (TIME_GPS_RECORDS / 1000);
         struct Record gpsRecords[len + 1];
         for (int x = 0; x < len; x++)
             gpsRecords[x] = {-1000, 0, 0};
@@ -224,7 +224,8 @@ void dynamicDive()
             // if dive valid (Pmin reached) get end GPS, else delete records and clean index
             if (validDive)
             {
-                String end = d.End(now(), gps.getLat(), gps.getLng(), diveMode);
+                Position endPos = gps.parseEnd();
+                String end = d.End(endPos.dateTime, endPos.Lat, endPos.Lng, diveMode);
                 if (end == "")
                 {
                     log_e("error ending the dive");
