@@ -117,6 +117,8 @@ void dynamicDive()
         tsys01 temperatureSensor = tsys01();
         ms5837 depthSensor = ms5837();
 
+        RunningAverage depthRAvg(30);
+
         bool led_on = false;
         bool endDive = false;
 
@@ -132,7 +134,19 @@ void dynamicDive()
         Position pos = gps.parseRecord(gpsRecords);
 
         if (d.Start(pos.dateTime, pos.Lat, pos.Lng, TIME_DYNAMIC_MODE, diveMode) == "")
+        { // blink if error
+            pinMode(GPIO_LED1, OUTPUT);
+            for (int i = 0; i < 3; i++)
+            {
+                digitalWrite(GPIO_LED1, HIGH);
+                delay(300);
+                digitalWrite(GPIO_LED1, LOW);
+                delay(300);
+            }
+        }
+        else
         {
+
             // save records from gps search
             for (int i = 0; i < len; i++)
             {
@@ -142,7 +156,7 @@ void dynamicDive()
 
             /* false while depth higher than minDepth */
             bool validDive = false;
-            int count = 0, countCheckWater = 0;
+            int count = 0;
             double depth, temp;
             long time = 0;
             unsigned long previousTime = 0, currentTime = 0;
@@ -158,8 +172,7 @@ void dynamicDive()
 
                     temp = temperatureSensor.getTemp();
                     depth = depthSensor.getDepth();
-                    log_i("Temp = %2.2f\t Depth = %3.3f\t Pressure = %4.4f", temp, depth, depthSensor.getPressure());
-                    ///////////////// Detect end of dive ////////////////////
+                    //log_i("Temp = %2.2f\t Depth = %3.3f\t Pressure = %4.4f", temp, depth, depthSensor.getPressure());
 
                     // if dive still not valid, check if depthMin reached
                     if (validDive == false)
@@ -171,37 +184,6 @@ void dynamicDive()
                             count = 0;        // reset count before detect end of dive
                         }
                     }
-
-                    // check water only if depth < MAX DEPTH CHECK WATER
-                    if (depth < MAX_DEPTH_CHECK_WATER && countCheckWater >= DELAY_CHECK_WATER)
-                    {
-                        countCheckWater = 0;
-                        pinMode(GPIO_PROBE, INPUT); // enable probe pin to allow water detection
-                        pinMode(GPIO_WATER, INPUT);
-                        int value = analogRead(GPIO_WATER);
-                        if (value < WATER_TRIGGER)
-                            count++; // if no water counter++
-
-                        log_d("Count = %d\t Value = %d", count, value);
-                        pinMode(GPIO_PROBE, OUTPUT); // set gpio probe pin as low output to avoid corrosion
-                        digitalWrite(GPIO_PROBE, LOW);
-                        pinMode(GPIO_WATER, OUTPUT);
-                        digitalWrite(GPIO_WATER, LOW);
-                    }
-                    else
-                    {
-                        countCheckWater++;
-                    }
-                    log_d("Count check water = %d", countCheckWater);
-
-                    if (count >= (validDive == true ? MAX_DYNAMIC_COUNTER_VALID_DIVE : MAX_DYNAMIC_COUNTER_NO_DIVE))
-                    {
-                        if (!detectSurface(END_SURFACE_DETECTION))
-                            endDive = true;
-                        else
-                            count = 0;
-                    }
-                    ///////////////// Detect end of dive ////////////////////
 
                     // Save record
                     Record tempRecord = Record{temp, depth, time};
@@ -218,6 +200,30 @@ void dynamicDive()
                     if (time % TIME_CHECK_BATTERY == 0)
                         if (readBattery() < LOW_BATTERY_LEVEL)
                             sleep(LOW_BATT_SLEEP);
+
+                    /////////////////// Depth Running Amplitude & average to detect end of dive/////////////
+                    depthRAvg.addValue(depth);
+
+                    // if avg depth is low (near surface), check depth amplitude to detect end of dive.
+                    if (depthRAvg.getAverage() < MIN_DEPTH_CHECK_AMPLITUDE)
+                    {
+                        // if depth amplitude lower than min val, diver is out of water, end dive.
+                        if (depthRAvg.getAmplitude() < ENDING_DIVE_DEPTH_AMPLITUDE)
+                            count++;
+                        else
+                            count = 0;
+                        log_i("Amplitude : %3.3f\tAverage : %3.3f\tCount : %d", depthRAvg.getAmplitude(), depthRAvg.getAverage(),count);
+                    }
+                    else
+                    {
+                        count = 0;
+                    }
+
+                    if (count >= (validDive == true ? MAX_DYNAMIC_COUNTER_VALID_DIVE : MAX_DYNAMIC_COUNTER_NO_DIVE))
+                    {
+                        endDive = true;
+                    }
+                    /////////////////// Depth Running Amplitude & average to detect end of dive/////////////
                 }
             }
 
@@ -259,7 +265,18 @@ void startStaticDive()
 
     staticCount = 0;
 
-    if (staticDive.Start(now(), gps.getLat(), gps.getLng(), TIME_TO_SLEEP_STATIC, diveMode) != "")
+    if (staticDive.Start(now(), gps.getLat(), gps.getLng(), TIME_TO_SLEEP_STATIC, diveMode) == "")
+    {
+        pinMode(GPIO_LED1, OUTPUT);
+        for (int i = 0; i < 3; i++)
+        {
+            digitalWrite(GPIO_LED1, HIGH);
+            delay(300);
+            digitalWrite(GPIO_LED1, LOW);
+            delay(300);
+        }
+    }
+    else
     {
         pinMode(GPIO_LED4, OUTPUT);
         for (int i = 0; i < 3; i++)

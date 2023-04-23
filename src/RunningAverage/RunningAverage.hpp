@@ -1,5 +1,5 @@
-#ifndef RunningAverage_h
-#define RunningAverage_h
+#ifndef RunningAverage_hpp
+#define RunningAverage_hpp
 //
 //    FILE: RunningAverage.h
 //  AUTHOR: Rob dot Tillaart at gmail dot com

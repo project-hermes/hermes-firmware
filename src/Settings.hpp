@@ -34,7 +34,8 @@
 #define LOW_BATTERY_LEVEL 3.3            //  If vBat < Low battery level, go back to sleep without water detection wakeup (Volts)
 #define DELAY_CHECK_WATER 30             // Delay between each check of water pin, to avoid corrosion
 #define TIME_UPLOAD_OTA 1800             // Time between 2 upload and OTA check (seconds)
-
+#define MIN_DEPTH_CHECK_AMPLITUDE 2.0    // min depth to check amplitude of depth before ending dive. (meter)
+#define ENDING_DIVE_DEPTH_AMPLITUDE 0.08 // min depth amplitude to end dive, if depth amplitude below val, diver is out of water.
 // Upload parameters
 const String indexPath = "/index.json";
 #define POST_RETRY 3 // number of post attemp before skip.
