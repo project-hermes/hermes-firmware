@@ -19,7 +19,9 @@ void IRAM_ATTR ISR()
 void wake()
 {
     // setup gpios
-    log_i("firmware version:%1.2f\n", FIRMWARE_VERSION);
+    log_n("firmware version:%1.2f\n", FIRMWARE_VERSION);
+    sd.writeFile("/version.txt", String(FIRMWARE_VERSION));
+
     pinMode(GPIO_LED1, OUTPUT);
     pinMode(GPIO_LED2, OUTPUT);
     pinMode(GPIO_LED3, OUTPUT);
