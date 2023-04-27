@@ -193,7 +193,7 @@ int Dive::writeMetadataStart(long time, double lat, double lng, int freq, bool m
     mdata["deviceId"] = remoraID();
     mdata["diveId"] = ID;
     char buf[50];
-    sprintf(buf,"%s - %1.1f",(mode == 1 ? "Static" : "Dynamic"),FIRMWARE_VERSION);
+    sprintf(buf,"%s - %1.2f",(mode == 1 ? "Static" : "Dynamic"),FIRMWARE_VERSION);
     mdata["mode"] = buf;
     mdata["startTime"] = time;
     mdata["startLat"] = lat;
