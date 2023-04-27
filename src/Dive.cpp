@@ -38,8 +38,6 @@ String Dive::Start(long time, lat lat, lng lng, int freq, bool mode)
     ID = createID(time);
     saveId(ID);
 
-
-
     diveRecords = new Record[siloRecordSize];
     if (writeMetadataStart(time, lat, lng, freq, mode) == -1)
     {
@@ -48,14 +46,14 @@ String Dive::Start(long time, lat lat, lng lng, int freq, bool mode)
     createIndex();
     //// Write battery level on SD Card only to debug offset  //////////
     String path = "/" + ID + "/battery.txt";
-    storage->writeFile(path, (String)readBattery()+"\n");
+    storage->writeFile(path, (String)readBattery() + "\n");
     /////////////////////////////////////////////////////////////
     return ID;
 }
 
 String Dive::End(long time, lat lat, lng lng, bool mode)
 {
-        //// Write battery level on SD Card only to debug offset  //////////
+    //// Write battery level on SD Card only to debug offset  //////////
     String path = "/" + ID + "/battery.txt";
     storage->appendFile(path, (String)readBattery());
     /////////////////////////////////////////////////////////////
@@ -193,7 +191,7 @@ int Dive::writeMetadataStart(long time, double lat, double lng, int freq, bool m
     mdata["deviceId"] = remoraID();
     mdata["diveId"] = ID;
     char buf[50];
-    sprintf(buf,"%s - %1.2f",(mode == 1 ? "Static" : "Dynamic"),FIRMWARE_VERSION);
+    sprintf(buf, "%s - %1.2f", (mode == 1 ? "Static" : "Dynamic"), FIRMWARE_VERSION);
     mdata["mode"] = buf;
     mdata["startTime"] = time;
     mdata["startLat"] = lat;
@@ -207,6 +205,8 @@ int Dive::writeMetadataStart(long time, double lat, double lng, int freq, bool m
 
 int Dive::writeMetadataEnd(long time, double lat, double lng)
 {
+    updateIndex(ID);
+
     StaticJsonDocument<1024> mdata;
     String path = "/" + ID + "/metadata.json";
 
@@ -238,7 +238,7 @@ int Dive::createIndex()
         // index[ID] = 0;
 
         JsonObject dive = index.createNestedObject(ID);
-        dive["uploaded"] = 0;
+        dive["uploaded"] = -1;
 
         String buffer;
         serializeJson(index, buffer);
@@ -259,7 +259,7 @@ int Dive::createIndex()
 
             deserializeJson(newIndex, index);
             JsonObject dive = newIndex.createNestedObject(ID);
-            dive["uploaded"] = 0;
+            dive["uploaded"] = -1;
 
             String buffer;
             serializeJson(newIndex, buffer);
@@ -284,7 +284,7 @@ int Dive::updateIndex(String updatedID)
 
         deserializeJson(newIndex, index);
         JsonObject dive = newIndex.createNestedObject(updatedID);
-        dive["uploaded"] = 1;
+        dive["uploaded"] = 0;
 
         String buffer;
         serializeJson(newIndex, buffer);
@@ -366,6 +366,9 @@ void Dive::deleteID(String ID)
     } while (storage->deleteFile(pathRecords) == 0); // delete silo files
 
     pathRecords = "/" + ID + "/metadata.json";
+    storage->deleteFile(pathRecords); // delete metadata file
+
+    pathRecords = "/" + ID + "/battery.txt";
     storage->deleteFile(pathRecords); // delete metadata file
 
     String path = "/" + ID;
