@@ -18,7 +18,7 @@
 #define TIME_TO_SLEEP_STATIC 10          /* Time ESP32 will go to sleep (in seconds) between each static record */
 #define TIME_DYNAMIC_MODE 1000           /* Time between two records in dynamic mode (ms)*/
 #define TIME_GPS_RECORDS 5000            /* Time between records during gps search*/
-#define MIN_DEPTH_VALID_DIVE 1.5         /* Min depth to validate dynamic dive (meters)*/
+#define MIN_DEPTH_VALID_DIVE 5         /* Min depth to validate dynamic dive (meters)*/
 #define MAX_DEPTH_CHECK_WATER 0.5        /* Max depth for water detection (meter)*/
 #define MAX_DEPTH_CHECK_GPS 1.0          /* Max depth for gps detection (meter)*/
 #define MAX_DYNAMIC_COUNTER_VALID_DIVE 1 /* Number of No Water to end dynamic dive (TIME_DYNAMIC_MODE / 1000 * MAX_DYNAMIC_COUNTER = seconds)*/
