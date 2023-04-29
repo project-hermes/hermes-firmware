@@ -83,7 +83,11 @@ void wake()
                 else if (i == GPIO_CONFIG) // button config (switch between diving modes)
                 {
                     log_d("Wake up gpio config");
+#ifdef MODE_DEBUG
+                    dynamicDive();
+#else
                     selectMode();
+#endif
                 }
             }
 
@@ -103,16 +107,29 @@ void dynamicDive()
 
     // detect if the wake up is because of diving or not
     // If not, do not start dynamic dive
+// detect if the wake up is because of diving or not
+// If not, do not start recording
+#ifdef MODE_DEBUG
+    if (true)
+#else
     if (detectSurface(BEGIN_SURFACE_DETECTION))
+#endif
     {
         log_d("Dynamic dive 1");
 
+        // set gpio probe pin as low output to avoid corrosion
+        pinMode(GPIO_PROBE, OUTPUT);
+        digitalWrite(GPIO_PROBE, LOW);
+
+        // set gpio sensor power pin as low output to power sensors
         pinMode(GPIO_SENSOR_POWER, OUTPUT);
         digitalWrite(GPIO_SENSOR_POWER, LOW);
+
         delay(10);
         Wire.begin(I2C_SDA, I2C_SCL);
         delay(10);
 
+        // Init sensors
         GNSS gps = GNSS();
         sd = SecureDigital();
         Dive d(&sd);
@@ -124,47 +141,59 @@ void dynamicDive()
         bool led_on = false;
         bool endDive = false;
 
-        unsigned long startTime = millis();
 
-        // Init struct for recording during start gps research
-        int len = TIME_GPS_START / (TIME_GPS_RECORDS / 1000);
+        // Init struct for recording during gps research
+        int len = TIME_GPS_START / (TIME_GPS_RECORDS);
         struct Record gpsRecords[len + 1];
         for (int x = 0; x < len; x++)
             gpsRecords[x] = {-1000, 0, 0};
 
-        // get gps position, dateTime and records.
+        // get gps position, dateTime and records during gps search.
         Position pos = gps.parseRecord(gpsRecords);
+        unsigned long startTime = pos.dateTime;
 
         if (d.Start(pos.dateTime, pos.Lat, pos.Lng, TIME_DYNAMIC_MODE, diveMode) != "")
         {
+            int timer = 0;
 
             // save records from gps search
             for (int i = 0; i < len; i++)
             {
                 if (gpsRecords[i].Temp > -100)
+                {
+                    timer += TIME_GPS_RECORDS;
                     d.NewRecord(gpsRecords[i]);
+                }
             }
 
-            /* false while depth higher than minDepth */
             bool validDive = false;
             int count = 0;
             double depth, temp;
-            long time = 0;
             unsigned long previousTime = 0, currentTime = 0;
+            int secondCount = 0;
 
             // if valid dive, dive end after short time, if dive still not valid, dive end after long time
             while (!endDive)
             {
-                currentTime = millis();
-                if (currentTime - previousTime > TIME_DYNAMIC_MODE)
+                currentTime = gps.getTime();
+                log_d("Current Time : %d\t StartTime : %d", currentTime, startTime);
+
+                if (currentTime != previousTime) // check if time changed
                 {
-                    previousTime = currentTime;
-                    time = (previousTime - startTime) / 1000; // get time in seconds since wake up
+                    secondCount++;
+                    previousTime = currentTime; // reset previous time
+                }
+
+                if (secondCount >= TIME_DYNAMIC_MODE ) // if new records required
+                {
+                    secondCount = 0;
+                    timer += TIME_DYNAMIC_MODE; // get time in seconds since wake up
 
                     temp = temperatureSensor.getTemp();
                     depth = depthSensor.getDepth();
                     // log_i("Temp = %2.2f\t Depth = %3.3f\t Pressure = %4.4f", temp, depth, depthSensor.getPressure());
 
+                    ///////////////// Detect end of dive ////////////////////
                     // if dive still not valid, check if depthMin reached
                     if (validDive == false)
                     {
@@ -177,7 +206,7 @@ void dynamicDive()
                     }
 
                     // Save record
-                    Record tempRecord = Record{temp, depth, time};
+                    Record tempRecord = Record{temp, depth, timer};
                     d.NewRecord(tempRecord);
 
                     // blink led
@@ -188,7 +217,7 @@ void dynamicDive()
                     led_on = !led_on;
 
                     // check battery, back to sleep  witjout water detection if lowBat
-                    if (time % TIME_CHECK_BATTERY == 0)
+                    if (timer % TIME_CHECK_BATTERY == 0)
                         if (readBattery() < LOW_BATTERY_LEVEL)
                             sleep(LOW_BATT_SLEEP);
 

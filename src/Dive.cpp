@@ -70,7 +70,7 @@ String Dive::End(long time, lat lat, lng lng, bool mode)
 
 int Dive::NewRecord(Record r)
 {
-    log_d("%d :\tTime=%d\tTemp=%2.3f\t Depth=%2.3f", currentRecords, r.Time, r.Temp, r.Depth);
+    log_d("%d :\tTime=%ld\tTemp=%2.3f\t Depth=%2.3f", currentRecords, r.Time, r.Temp, r.Depth);
 
     diveRecords[currentRecords] = r;
     currentRecords++;
@@ -369,7 +369,7 @@ void Dive::deleteID(String ID)
     storage->deleteFile(pathRecords); // delete metadata file
 
     pathRecords = "/" + ID + "/battery.txt";
-    storage->deleteFile(pathRecords); // delete metadata file
+    storage->deleteFile(pathRecords); // delete battery file
 
     String path = "/" + ID;
     storage->removeDirectory(path); // remove directory

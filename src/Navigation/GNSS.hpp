@@ -32,6 +32,7 @@ public:
     Position parseRecord(struct Record *records);
     void parse();
     Position parseEnd();
+    time_t getTime();
 
 private:
     HardwareSerial GPSSerial = Serial2;
