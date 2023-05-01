@@ -175,7 +175,7 @@ long postMetadata(String data)
             Serial.print("HTTP Response code: ");
             String payload = http.getString();
             Serial.println(payload);
-                        return -3;
+            return -3;
         }
         else
         {
@@ -242,9 +242,9 @@ void startPortal(SecureDigital sd)
 
     log_v("starting config portal...");
 
-    AutoConnectConfig acConfig("Remora Config", "cousteau");
-    // acConfig.hostName = String("remora");
-    // acConfig.homeUri = "https://www.google.fr";
+    AutoConnectConfig acConfig("Remora Config", "cousteau", 0, AUTOCONNECT_AP_CH);
+    acConfig.hostName = String("Remora");
+    acConfig.homeUri = "/";
     acConfig.autoReconnect = true;
     acConfig.autoReset = false;
     acConfig.portalTimeout = 15 * 60 * 1000;
@@ -252,9 +252,12 @@ void startPortal(SecureDigital sd)
     acConfig.ticker = true;
     acConfig.tickerPort = GPIO_LED3;
     acConfig.tickerOn = LOW;
+    acConfig.menuItems = acConfig.menuItems | AC_MENUITEM_DEVINFO;
+    acConfig.menuItems = acConfig.menuItems | AC_MENUITEM_DELETESSID;
+
     Portal.config(acConfig);
     Portal.begin();
-    bool error = false;
+    long previous = -1000000000;
 
     while (WiFi.status() == WL_DISCONNECTED)
     {
@@ -265,31 +268,28 @@ void startPortal(SecureDigital sd)
     // detach interrupt to keep remora alive during upload and ota process even if usb is disconnected
     detachInterrupt(GPIO_VCC_SENSE);
 
-    pinMode(GPIO_LED1, OUTPUT);
-    digitalWrite(GPIO_LED2, HIGH);
-
     log_v("Wifi connected, start upload dives");
-
-    if (uploadDives(sd) != SUCCESS)
-    {
-        error = true;
-        log_e("Error after upload");
-    }
-
-    log_v("Upload finished, start OTA");
-    if (ota(sd) != SUCCESS)
-    {
-        error = true;
-        log_e("Error after OTA");
-    }
-
-    pinMode(GPIO_LED1, OUTPUT);
-    digitalWrite(GPIO_LED1, error);
-    digitalWrite(GPIO_LED2, LOW);
-    log_v("OTA finished, waiting for usb disconnection");
 
     while (WiFi.status() == WL_CONNECTED && digitalRead(GPIO_VCC_SENSE))
     {
+
+        if (millis() - previous > TIME_UPLOAD_OTA * 1000) // retry upload and ota after a while
+        {
+            pinMode(GPIO_LED2, OUTPUT);
+            digitalWrite(GPIO_LED2, HIGH);
+
+            if (uploadDives(sd) != SUCCESS)
+                log_e("Error after upload");
+
+            log_v("Upload finished, start OTA");
+            if (ota(sd) != SUCCESS)
+                log_e("Error after OTA");
+
+            digitalWrite(GPIO_LED2, LOW);
+            log_v("OTA finished, waiting for usb disconnection");
+
+            previous = millis(); // reset upload and ota retry timer
+        }
         Portal.handleClient();
     }
 

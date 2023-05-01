@@ -14,6 +14,10 @@
 #include <Utils.hpp>
 #include <Connect.hpp>
 #include <Settings.hpp>
+#include <RunningAverage/RunningAverage.hpp>
+
+#define DYNAMIC_MODE 0
+#define STATIC_MODE 1
 
 #define DYNAMIC_MODE 0
 #define STATIC_MODE 1
