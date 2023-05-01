@@ -141,7 +141,6 @@ void dynamicDive()
         bool led_on = false;
         bool endDive = false;
 
-
         // Init struct for recording during gps research
         int len = TIME_GPS_START / (TIME_GPS_RECORDS);
         struct Record gpsRecords[len + 1];
@@ -150,7 +149,7 @@ void dynamicDive()
 
         // get gps position, dateTime and records during gps search.
         Position pos = gps.parseRecord(gpsRecords);
-        unsigned long startTime = pos.dateTime;
+        // unsigned long startTime = pos.dateTime;
 
         if (d.Start(pos.dateTime, pos.Lat, pos.Lng, TIME_DYNAMIC_MODE, diveMode) != "")
         {
@@ -184,7 +183,7 @@ void dynamicDive()
                     previousTime = currentTime; // reset previous time
                 }
 
-                if (secondCount >= TIME_DYNAMIC_MODE ) // if new records required
+                if (secondCount >= TIME_DYNAMIC_MODE) // if new records required
                 {
                     secondCount = 0;
                     timer += TIME_DYNAMIC_MODE; // get time in seconds since wake up
