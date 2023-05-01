@@ -4,8 +4,6 @@
 GNSS::GNSS()
 {
     // parse();
-    GPSSerial.begin(9600);
-    delay(100);
 }
 
 lat GNSS::getLat()
@@ -111,6 +109,8 @@ Position GNSS::parseRecord(struct Record *records)
                 if (year() > 2020 && year() < 2030 && !timeOK)
                 {
                     timeOK = true;
+                    pos.dateTime = now();
+                    log_d("DateTime: %ld\tNow:%ld", pos.dateTime, now());
                 }
             }
             if (gps.location.isValid())
@@ -126,7 +126,7 @@ Position GNSS::parseRecord(struct Record *records)
             if (currentTime != previousTime) // check if time changed
             {
                 count++;
-                previousTime = currentTime; //reset previous time
+                previousTime = currentTime; // reset previous time
             }
 
             if (count >= TIME_GPS_RECORDS) // if new records required
@@ -142,7 +142,7 @@ Position GNSS::parseRecord(struct Record *records)
             }
         }
     }
-    digitalWrite(GPIO_LED2, LOW);                              // turn syn led off when gps connected
+    digitalWrite(GPIO_LED2, LOW);                       // turn syn led off when gps connected
     pos.dateTime = now() - idRecord * TIME_GPS_RECORDS; // start datetime is the before the gps search so we remove the duration of the gps search.
     log_d("DateTime: %ld\tNow:%ld", pos.dateTime, now());
 

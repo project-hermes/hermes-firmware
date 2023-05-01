@@ -9,12 +9,10 @@
 #define FIRMWARE_VERSION 3.54
 
 // Debug parameters
-
 // #define MODE_DEBUG
 // #define SERIAL1_DEBUG_OUTPUT
 
 // Dives parameters
-// #define uS_TO_S_FACTOR 1000000           /* Conversion factor for micro seconds to seconds */
 #define OFFSET_SLEEP_STATIC 1700         /*Offset going to sleep and wake up static mode*/
 #define TIME_TO_SLEEP_STATIC 10          /* Time ESP32 will go to sleep (in seconds) between each static record */
 #define TIME_DYNAMIC_MODE 1              /* Time between two records in dynamic mode (s)*/
@@ -29,11 +27,9 @@
 #define TIME_GPS_START 600               // research time gps at the beginning of the dive(seconds)
 #define TIME_GPS_END 900                 // research time gps at the end of the dive (seconds)
 #define TIME_SURFACE_DETECTION 5         // Time to detect surface crossing at the beginning of the dive (seconds)
-#define BEGIN_SURFACE_DETECTION 0.02     // depth max-min to detect surface crossing at the beggining of the dive
-// #define END_SURFACE_DETECTION 0.02      // depth max-min to detect surface crossing at the end of the dive
+#define BEGIN_SURFACE_DETECTION 0.05     // depth max-min to detect surface crossing at the beggining of the dive
 #define TIME_CHECK_BATTERY 60 // Time between 2 battery ccheck during dynamic dive. (seconds)
 #define LOW_BATTERY_LEVEL 3.3 //  If vBat < Low battery level, go back to sleep without water detection wakeup (Volts)
-// #define DELAY_CHECK_WATER 30             // Delay between each check of water pin, to avoid corrosion
 #define TIME_UPLOAD_OTA 1800             // Time between 2 upload and OTA check (seconds)
 #define MIN_DEPTH_CHECK_AMPLITUDE 2.0    // min depth to check amplitude of depth before ending dive. (meter)
 #define ENDING_DIVE_DEPTH_AMPLITUDE 0.08 // min depth amplitude to end dive, if depth amplitude below val, diver is out of water.
