@@ -38,6 +38,8 @@ String Dive::Start(long time, lat lat, lng lng, int freq, bool mode)
     ID = createID(time);
     saveId(ID);
 
+
+
     diveRecords = new Record[siloRecordSize];
     if (writeMetadataStart(time, lat, lng, freq, mode) == -1)
     {

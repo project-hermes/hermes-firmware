@@ -68,7 +68,18 @@ void wake()
                     }
                     else
                     {
-                        dynamicDive();
+
+                        // detect if the wake up is because of diving or not
+                        // If not, do not start dynamic dive
+                        if (detectSurface())
+                        {
+                            log_d("Dynamic dive");
+                            dynamicDive();
+                        }
+                        else
+                        {
+                            log_d("Surface not detected");
+                        }
                     }
                 }
                 else if (i == GPIO_VCC_SENSE) // wifi config
